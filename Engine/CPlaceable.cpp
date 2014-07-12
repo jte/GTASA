@@ -1,0 +1,105 @@
+#include "StdInc.h"
+
+CPlaceable::CPlaceable()
+{
+    m_placement.pos = CVector(0.0f,0.0f,0.0f);
+    m_placement.angle = 0.0f;
+    m_xyz = NULL;
+}
+
+CMatrix *CPlaceable::GetMatrix()
+{
+    return &m_xyz->matrix;
+}
+
+CVector CPlaceable::GetPos() const
+{
+    if(m_xyz)
+    {
+        return CVector(m_xyz->matrix.m_matrix.pos.x, m_xyz->matrix.m_matrix.pos.y, m_xyz->matrix.m_matrix.pos.z);
+    }
+    else
+    {
+        return m_placement.pos;
+    }
+}
+
+bool CPlaceable::IsWithinArea(float x_min, float y_min, float x_max, float y_max) const
+{
+    CVector pos = GetPos();
+    if(x_min > x_max)
+    {
+        Exchange(x_max, x_min);
+    }
+    if(y_min > y_max)
+    {
+        Exchange(y_max, y_min);
+    }
+    return pos.x >= x_min && pos.x <= x_max && pos.y >= y_min && pos.y <= y_max;
+}
+
+bool CPlaceable::IsWithinArea(float x_min, float y_min, float z_min, float x_max, float y_max, float z_max) const
+{
+    CVector pos = GetPos();
+    if(x_min > x_max)
+    {
+        Exchange(x_max, x_min);
+    }
+    if(y_min > y_max)
+    {
+        Exchange(y_max, y_min);
+    }
+    if(z_min > z_max)
+    {
+        Exchange(z_max, z_min);
+    }
+    return pos.x >= x_min && pos.x <= x_max && pos.y >= y_min && pos.y <= y_max && pos.z >= z_min && pos.z <= z_max;
+}
+
+void CPlaceable::AllocateStaticMatrix()
+{
+    if(m_xyz)
+    {
+        g_MatrixLinkList.MoveToList2(m_xyz);
+    }
+    else
+    {
+        CMatrixLink *link = g_MatrixLinkList.AddToList2();
+        if(!link)
+        {
+            g_MatrixLinkList.m_list1_tail.prev->ref->ShutdownMatrixArray();
+            link = g_MatrixLinkList.AddToList2();
+        }
+        link->ref = this;
+        m_xyz = link;
+    }
+}
+
+void CPlaceable::AllocateMatrix()
+{
+    if(!m_xyz)
+    {
+        CMatrixLink *link = g_MatrixLinkList.AddToList1();
+        if(!link)
+        {
+            g_MatrixLinkList.m_list1_tail.prev->ref->ShutdownMatrixArray();
+            link = g_MatrixLinkList.AddToList1();
+        }
+        link->ref = this;
+        m_xyz = link;
+    }
+}
+
+void CPlaceable::SetMatrix(CMatrix const &mat)
+{
+    if(!m_xyz)
+    {
+        if(mat.m_matrix.at.z == 1.0f)
+        {
+            m_placement.pos = CVector(mat.m_matrix.pos.x, mat.m_matrix.pos.y, mat.m_matrix.pos.z);
+            m_placement.angle = atan2(mat.m_matrix.up.y, -mat.m_matrix.up.x);
+        }
+        AllocateMatrix();
+    }
+    m_xyz->matrix = mat;
+}

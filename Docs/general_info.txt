@@ -1,0 +1,77 @@
+﻿CBaseModelInfo
+	flags:
+		0x80 - has col model set
+		
+CPhysical
+	immunities:
+		0x800000 - explosionproof
+		0x040000 - bulletproof
+		
+CEntity
+	entityInfo 
+        (nType)
+        uint32_t bIsTypeNothing : 1;
+        uint32_t bIsTypeBuilding : 1;
+        uint32_t bIsTypeVehicle : 1;
+        uint32_t bIsTypePed : 1;
+        uint32_t bIsTypeObject : 1;
+        uint32_t bIsTypeDummy : 1;
+        uint32_t bIsTypeNotInPools : 1;
+		0 - nothing
+		1 - building < uses g_Sectors + 0 
+		2 - vehicle < uses g_SectorList +0
+		3 - ped < uses g_SectorList + 1 ->next
+		4 - object < uses g_SectorList + 2 ->prev
+		5 - dummy < uses g_Sectors + 1 ->next
+		6 - notinpools
+        (nStatus)
+        enum eEntityStatus
+        {
+            STATUS_PLAYER,
+            STATUS_PLAYER_PLAYBACKFROMBUFFER,
+            STATUS_SIMPLE,
+            STATUS_PHYSICS,
+            STATUS_ABANDONED,
+            STATUS_WRECKED,
+            STATUS_TRAIN_MOVING,
+            STATUS_TRAIN_NOT_MOVING,
+            STATUS_HELI,
+            STATUS_PLANE,
+            STATUS_PLAYER_REMOTE,
+            STATUS_PLAYER_DISABLED,
+            STATUS_TRAILER,
+            STATUS_SIMPLE_TRAILER
+        };
+        
+CObject->flags
+    0x40 - exploded
+    0x200 - targetable
+    0x400 - broken
+        
+uiCarType
+    5 - boat
+
+        sector system
+	> subdivided by rectangles 2d grid
+	> entities - rectangle 2d get by CEntity::GetBoundRect
+	
+rect.left   limit: -3000.0 (clipped to limit)
+rect.right  limit: +3000.0 (clipped to 2999.0)
+rect.bottom limit: -3000.0 (clipped to limit)
+rect.top    limit: +3000.0 (clipped to 2999.0)
+	> big buildings are processed differently (more grid allocated to them)
+
+calculation (normal):
+	sector.left = floor(rect.left * 0.02 + 60.0) [0,120]
+	sector.bottom = floor(rect.bottom * 0.02 + 60.0) [0,120]
+	sector.right = floor(rect.right * 0.02 + 60.0) [0,120] 
+	sector.top = floor(rect.top * 0.02 + 60.0) [0,120]
+
+60 x 60 x 60 x 60 grid units ( 0.02 units per grid unit)
+
+ max   unit   grid units in one direction
+3000 * 0.02 = 60
+
+ms_aSectors[(sector.left % 16) + 16 * (sector.bottom % 16)]
+
+ms_aRepeatSectors[Clamp(0, sector.left, MAX_GRID_UNITS-1) + MAX_GRID_UNITS * Clamp(0, sector.bottom, MAX_GRID_UNITS-1)]

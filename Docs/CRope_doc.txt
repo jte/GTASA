@@ -1,0 +1,30 @@
+RopeTypes:
+1
+    RopeAttacherObject: Industrial Magnet
+    Mass: 20kg
+    Segment Length: 0.6451613m
+2
+    RopeAttacherObject: CJ Player Harness
+    Mass: 20kg
+    Segment Length: 0.6451613m
+3
+    RopeAttacherObject: Mini Magnet
+    Mass: 10kg
+    Segment Length: 0.32258064m
+4
+    RopeAttacherObject: Industrial Magnet
+    Mass: 50kg
+    Segment Length: 1.6129032m
+5
+    RopeAttacherObject: Wreking Ball
+    Mass: 68kg
+    Segment Length: 2.1935484m
+6
+    RopeAttacherObject: Industrial Magnet
+    Note: Has special render property
+    Mass: 68kg
+    Segment Length: 2.1935484m
+7
+    RopeAttacherObject: Industrial Magnet
+    Mass: 68kg
+    Segment Length: 2.1935484m
