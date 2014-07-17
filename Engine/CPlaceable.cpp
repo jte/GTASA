@@ -103,3 +103,39 @@ void CPlaceable::SetMatrix(CMatrix const &mat)
     }
     m_xyz->matrix = mat;
 }
+
+CVector CPlaceable::GetAt()
+{
+    if(m_xyz)
+    {
+        return m_xyz->matrix.matrix.at;
+    }
+    else
+    {
+        return CVector(0.0f, 0.0f, 1.0f);
+    }
+}
+
+CVector CPlaceable::GetRight()
+{
+    if(m_xyz)
+    {
+        return m_xyz->matrix.matrix.right;
+    }
+    else
+    {
+        return CVector(cos(m_transform.angle), sin(m_transform.angle), 0.0f);
+    }
+}
+
+CVector CPlaceable::GetTop()
+{
+    if(m_xyz)
+    {
+        return m_xyz->matrix.matrix.top;
+    }
+    else
+    {
+        return CVector(-sin(m_transform.angle), cos(m_transform.angle), 0.0f);
+    }
+}

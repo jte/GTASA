@@ -3,12 +3,12 @@
 class CCustomBuildingRenderer
 {
 public:
-	void AtomicSetup(RpAtomic* atomic);
+	static void AtomicSetup(RpAtomic* atomic);
 //	* CCustomBuildingRenderer()
-	bool Initialise();
+	static bool Initialise();
 	//* IsCBPCPipelineAttached(RpAtomic*)
-	bool PluginAttach();
-	void Shutdown();
+	static bool PluginAttach();
+	static void Shutdown();
 	//* Update()
 	//* UpdateDayNightBalanceParam()
 	//* ~CCustomBuildingRenderer()

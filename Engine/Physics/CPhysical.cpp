@@ -737,3 +737,24 @@ void CPhysical::ProcessEntityCollision(CEntity *pOther, CColPoint *pColPoint)
         }
     }
 }
+
+bool CPhysical::ApplyCollision(CEntity* colEntity, CColPoint& colPoint, float& colForce)
+{
+    if(m_disableTurnForce)
+    {
+        float dot = DotProduct(m_linearVelocity, colPoint->Normal);
+        if(dot < 0.0f)
+        {
+            colForce = -dot * m_mass;
+            CVector reaction = colForce * colPoint->Normal;
+            ApplyMoveForce(reaction);
+            AudioEngine.ReportCollision(this, colEntity, colPoint->surfaceTypeA, colPoint->surfaceTypeB, colPoint, colPoint->Normal,
+                                        colForce / m_mass, 1.0f, 0, 0);
+            return true;
+        }
+    }
+    else
+    {
+
+    }
+}

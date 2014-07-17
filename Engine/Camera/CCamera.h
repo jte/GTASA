@@ -241,8 +241,8 @@ private:
                             // We can't change the camera mode because other objects depend on their
 
     /* BELOW MIGHT BE WRONG !!! */
-    CGarage *pToGarageWeAreIn;
-    CGarage *pToGarageWeAreInForHackAvoidFirstPerson;
+    class CGarage *pToGarageWeAreIn;
+    class CGarage *pToGarageWeAreInForHackAvoidFirstPerson;
     CQueuedMode m_PlayerMode;
     // The higher priority player camera mode. This one is used
     // for the sniper mode and rocket launcher mode.
@@ -291,23 +291,23 @@ private:
     bool m_bResetOldMatrix;
 
 //  protected:
-#if 0
-    // Original
-    CMatrix_Padded m_cameraMatrix;
-    CMatrix_Padded m_cameraMatrixOld;
-    CMatrix_Padded m_viewMatrix;
-    CMatrix_Padded m_matInverse;
-    CMatrix_Padded m_matMirrorInverse;
-    CMatrix_Padded m_matMirror;
+#if 1
+    // Original R*
+    RwMatrixTag m_cameraMatrix;
+    RwMatrixTag m_cameraMatrixOld;
+    RwMatrixTag m_viewMatrix;
+    RwMatrixTag m_matInverse;
+    RwMatrixTag m_matMirrorInverse;
+    RwMatrixTag m_matMirror;
 #else
-    // Looks more likely to be this
-    CMatrix_Padded m_cameraMatrix;
+    // MTASA
+    RwMatrixTag m_cameraMatrix;
     int unk1[2];
-    CMatrix_Padded m_cameraMatrixOld;
+    RwMatrixTag m_cameraMatrixOld;
     int unk2[2];
-    CMatrix_Padded m_viewMatrix;
+    RwMatrixTag m_viewMatrix;
     int unk3[2];
-    CMatrix_Padded m_matInverse;
+    RwMatrixTag m_matInverse;
     int unk4[26];
 #endif
 

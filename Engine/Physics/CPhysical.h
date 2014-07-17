@@ -7,7 +7,7 @@ public:
 	void AddCollisionRecord(CEntity *pEntity);
 	void AddToMovingList();
 	void ApplyAirResistance();
-	//* ApplyCollision(CEntity*, CColPoint&, float&)
+	bool ApplyCollision(CEntity* colEntity, CColPoint& colPoint, float& colForce);
 	//* ApplyCollision(CPhysical*, CColPoint&, float&, float&)
 	void ApplyCollisionAlt(CEntity*, CColPoint&, float&, CVector&, CVector&);
 	//* ApplyForce(CVector, CVector, bool)
@@ -68,9 +68,9 @@ public:
         float m_last_collision_check;
         uint32_t m_0x01 : 1;
         uint32_t m_apply_gravity : 1;
-        uint32_t m_disable_friction : 1;
+        uint32_t m_disableFriction : 1; // CHECKED
         uint32_t m_collidable : 1;
-        uint32_t m_disable_turn_force : 1;
+        uint32_t m_disableTurnForce : 1; // CHECKED
         uint32_t m_disable_z_component : 1;
         uint32_t m_infinite_mass : 1;
         uint32_t m_0x80 : 1;
@@ -98,6 +98,7 @@ public:
         uint32_t m_destroyed : 1;
         uint32_t m_0x40000000 : 1;
         uint32_t m_0x80000000 : 1;
+
         CVector m_linear_velocity;
         CVector m_angular_velocity;
         CVector m_friction_move_force;

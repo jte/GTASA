@@ -12,9 +12,9 @@
     (RWPLUGINOFFSET(FramePluginDef, object, ms_framePluginOffset)->var)
 
 
-static RwInt32 CVisibilityPlugins::ms_atomicPluginOffset = -1;;
-static RwInt32 CVisibilityPlugins::ms_clumpPluginOffset = -1;
-static RwInt32 CVisibilityPlugins::ms_framePluginOffset = -1;
+RwInt32 CVisibilityPlugins::ms_atomicPluginOffset = -1;;
+RwInt32 CVisibilityPlugins::ms_clumpPluginOffset = -1;
+RwInt32 CVisibilityPlugins::ms_framePluginOffset = -1;
 static float gVehicleDistanceFromCamera;
 static float gVehicleAngleFromCamera;
 
@@ -63,33 +63,33 @@ void *CVisibilityPlugins::AtomicCopyConstructor(void *dstAtomic, const void *src
     return dstAtomic;
 }
 
-float CVisibilityPlugins::CalculateFadingAtomicAlpha(CBaseModelInfo *pModelInfo, CEntity *pEntity, float fBias)
+float CVisibilityPlugins::CalculateFadingAtomicAlpha(CBaseModelInfo* modelInfo, CEntity* entity, float currentAlpha)
 {
-    float fScale = 20.0f;
-    float fMaxPlaneRange = pModelInfo->pColModel->boundingBox.fRadius + CRenderer::ms_fFarClipPlane;
-    float fRangeCam = TheCamera.GenerationDistMultiplier * pModelInfo->fLoadDistanceUnscaled;
-    if(fRangeCam < fMaxPlaneRange)
+    float scale = 20.0f;
+    float maxPlaneRange = modelInfo->GetColModel()->GetBoundingBox().GetRadius() + CRenderer::ms_fFarClipPlane;
+    float rangeCam = TheCamera.GenerationDistMultiplier * modelInfo->GetLoadDistanceUnscaled();
+    if(rangeCam < maxPlaneRange)
     {
-        fMaxPlaneRange = fRangeCam;
+        maxPlaneRange = rangeCam;
     }
-    if(!pEntity->m_pLod)
+    if(!entity->GetLodEntity())
     {
-        float fDistScale = pModelInfo->fLoadDistanceUnscaled;
-        if(fDistScale >= fMaxPlaneRange)
+        float distScale = modelInfo->GetLoadDistanceUnscaled();
+        if(distScale >= maxPlaneRange)
         {
-            fDistScale = fMaxPlaneRange;
+            distScale = maxPlaneRange;
         }
-        if(fDistScale > 150.0f)
+        if(distScale > 150.0f)
         {
-            fScale = fDistScale / 15.0f + 10.0f;
-            if(pEntity->bIsBIGBuilding)
+            scale = distScale / 15.0f + 10.0f;
+            if(entity->GetIsBigBuilding())
             {
-                fMaxPlaneRange *= CRenderer::ms_lowLodDistScale;
+                maxPlaneRange *= CRenderer::ms_lowLodDistScale;
             }
         }
     }
-    float fAlphaMult = ClampMax((fMaxPlaneRange + 20.0f - fBias) / fScale, 1.0f);
-    return pModelInfo->m_ucAlpha * fAlphaMult;
+    float alphaMult = ClampMax((maxPlaneRange + 20.0f - currentAlpha) / scale, 1.0f);
+    return modelInfo->GetAlpha() * alphaMult;
 }
 
 void CVisibilityPlugins::ClearAtomicFlag(RpAtomic *pAtomic, unsigned short usFlag)
@@ -142,13 +142,13 @@ void *CVisibilityPlugins::FrameDestructor(void *frame, RwInt32 offset, RwInt32 s
     return frame;
 }
 
-bool CVisibilityPlugins::FrustumSphereCB(RpClump *pClump)
+bool CVisibilityPlugins::FrustumSphereCB(RpClump* clump)
 {
-    RwFrame *pFrame = (RwFrame*)pClump->object.parent;
-    CClumpModelInfo *pModelInfo = (CClumpModelInfo*)GetFrameHierarchyId(pFrame);
+    RwFrame* frame = GetClumpFrame(clump);
+    CClumpModelInfo* modelInfo = (CClumpModelInfo*)GetFrameHierarchyId(frame);
     RwSphere frustum;
-    frustum = pModelInfo->pColModel->boundingBox;
-    RwMatrix *ltm = RwFrameGetLTM(pFrame);
+    frustum = modelInfo->GetColModel()->GetBoundingBox();
+    RwMatrix* ltm = RwFrameGetLTM(frame);
     RwV3dTransformPoints(&frustum.center, &frustum.center, 1, ltm);
     return RwCameraFrustumTestSphere(ms_pCamera, &frustum) != 0;
 }
@@ -681,6 +681,34 @@ bool CVisibilityPlugins::CanRenderAtomic(RpAtomic* atomic, float& dot)
     return false;
 }
 
+bool CVisibilityPlugins::CanRenderAtomicBigVeh(RpAtomic* atomic, float& dot)
+{
+   RwMatrixTag* atomicLTM = RwFrameGetLTM(GetAtomicFrame(atomic));
+    RwMatrixTag* clumpLTM = RwFrameGetLTM(GetClumpFrame(atomic->clump));
+    dot = GetDotProductWithCameraVector(atomicLTM, clumpLTM, GetAtomicId(atomic));
+    if(gVehicleDistanceFromCamera <= ms_cullBigCompsDist)
+    {
+        return true;
+    }
+    else if(GetAtomicId(atomic) & 0x400)
+    {
+        return true;
+    }
+    else if(gVehicleAngleFromCamera >= 0.2f)
+    {
+        return true;
+    }
+    else if(dot <= 0.0f)
+    {
+        return true;
+    }
+    else if((GetAtomicId(atomic) & 0x80) && (gVehicleDistanceFromCamera / 10.0f) >= dot * dot)
+    {
+        return true;
+    }
+    return false;
+}
+
 RpAtomic* CVisibilityPlugins::RenderTrainHiDetailCB(RpAtomic* atomic)
 {
     if(gVehicleDistanceFromCamera < ms_bigVehicleLod0Dist)
@@ -697,6 +725,87 @@ RpAtomic* CVisibilityPlugins::RenderTrainHiDetailCB(RpAtomic* atomic)
         if(CanRenderAtomic(atomic, dot))
         {
             AtomicDefaultRenderCallBack(atomic);
+        }
+    }
+    return atomic;
+}
+
+RpAtomic* CVisibilityPlugins::RenderVehicleHiDetailAlphaCB(RpAtomic* atomic)
+{
+    if(gVehicleDistanceFromCamera < ms_vehicleLod0Dist)
+    {
+        if(gVehicleDistanceFromCamera >= ms_vehicleLod0RenderMultiPassDist)
+        {
+            SetAtomicFlag(atomic, 0x2000);
+        }
+        else
+        {
+            ClearAtomicFlag(atomic, 0x2000);
+        }
+        float dot = 0.0f;
+        if(CanRenderAtomic(atomic, dot))
+        {
+            float alpha = gVehicleDistanceFromCamera;
+            if(GetAtomicId(atomic) & 0x40)
+            {
+                alpha -= 1/10000;
+            }
+            else
+            {
+                alpha += dot;
+            }
+            if(!InsertAtomicIntoSortedList(atomic, alpha))
+            {
+                AtomicDefaultRenderCallBack(atomic);
+            }
+        }
+    }
+    return atomic;
+}
+
+RpAtomic* CVisibilityPlugins::RenderVehicleHiDetailAlphaCB_BigVehicle(RpAtomic* atomic)
+{
+    if(gVehicleDistanceFromCamera < ms_bigVehicleLod0Dist)
+    {
+        if(gVehicleDistanceFromCamera >= ms_vehicleLod0RenderMultiPassDist)
+        {
+            SetAtomicFlag(atomic, 0x2000);
+        }
+        else
+        {
+            ClearAtomicFlag(atomic, 0x2000);
+        }
+        float dot = 0.0f;
+        if(CanRenderAtomicBigVeh(atomic, dot))
+        {
+            float alpha = gVehicleDistanceFromCamera;
+            if(GetAtomicId(atomic) & 0x40)
+            {
+                alpha -= 1/10000;
+            }
+            else
+            {
+                alpha += dot;
+            }
+            if(!InsertAtomicIntoSortedList(atomic, alpha))
+            {
+                AtomicDefaultRenderCallBack(atomic);
+            }
+        }
+    }
+}
+
+RpAtomic* CVisibilityPlugins::RenderPedCB(RpAtomic* atomic)
+{
+    if(GetDistanceSquaredFromCamera(GetAtomicFrame(atomic)) < ms_pedLodDist)
+    {
+        if(GetClumpAlpha(atomic->clump) == 255)
+        {
+            AtomicDefaultRenderCallBack(atomic);
+        }
+        else
+        {
+            RenderAtomicWithAlpha(atomic, GetClumpAlpha(atomic->clump));
         }
     }
     return atomic;

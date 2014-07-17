@@ -1,16 +1,6 @@
 #pragma once
 
-
-struct SPlacement
-{
-    SPlacement()
-    {
-        pos = CVector(0.0f, 0.0f, 0.0f);
-        angle = 0.0f;
-    }
-    CVector pos;
-    float angle;
-};
+#include "Engine\CSimpleTransform.h"
 
 class CPlaceable
 {
@@ -31,8 +21,13 @@ public:
 	void ShutdownMatrixArray();
     CVector GetPos() const;
 	~CPlaceable();
+
+    //
+    CVector GetAt() const;
+    CVector GetRight() const;
+    CVector GetTop() const;
 protected:
 private:
-    SPlacement m_placement;
+    CSimpleTransform m_placement;
     class CMatrixLink *m_xyz;
 };

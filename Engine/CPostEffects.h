@@ -8,7 +8,7 @@ public:
 	* ColourFilter(RwRGBA, RwRGBA)
 	* DarknessFilter(int)
 	* DoScreenModeDependentInitializations()
-	* DrawQuad(float, float, float, float, unsigned char, unsigned char, unsigned char, unsigned char, RwRaster*)
+	void DrawQuad(float x, float y, float width, float height, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RwRaster* raster);
 	* DrawQuadSetDefaultUVs()
 	* DrawQuadSetPixelUVs(float, float, float, float, float, float, float, float)
 	* DrawQuadSetUVs(float, float, float, float, float, float, float, float)
@@ -27,7 +27,7 @@ public:
 	void InfraredVisionSetLightsForDefaultObjects();
 	* InfraredVisionSetLightsForHeatObjects()
 	* InfraredVisionStoreAndSetLightsForHeatObjects(CPed*)
-	* Initialise()
+	void Initialise();
 	bool IsVisionFXActive();
 	* MobileRender()
 	* NightVision(RwRGBA)

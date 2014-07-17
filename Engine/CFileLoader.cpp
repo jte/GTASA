@@ -3,7 +3,7 @@
 RpAtomic *CFileLoader::FindRelatedModelInfoCB(RpAtomic *atomic, void *data)
 {
     RpClump *clump = (RpClump*)data;
-    const char *name = GetFrameNodeName((RwFrame*)atomic->object.object.parent);
+    const char *name = GetFrameNodeName(GetAtomicFrame(atomic));
     char *modelName;
     bool damage;
     GetNameAndDamage(name, modelName, damage);

@@ -6,12 +6,12 @@ const int NUMBER_OF_VECTORS_FOR_AVERAGE=2;
 class CCam
 {
 public:
-	//* CacheLastSettingsDWCineyCam()
+	void CacheLastSettingsDWCineyCam();
 	//* DoAverageOnVector(CVector const&)
 	//* DoCamBump(float, float)
-	//* Finalise_DW_CineyCams(CVector*, CVector*, float, float, float, float)
+	void Finalise_DW_CineyCams(CVector*, CVector*, float, float, float, float);
 	//* GetBoatLook_L_R_HeightOffset(float&)
-	//* GetCoreDataForDWCineyCamMode(CEntity**, CVehicle**, CVector*, CVector*, CVector*, CVector*, CVector*, CVector*, float*, CVector*, float*, CColSphere*)
+	void GetCoreDataForDWCineyCamMode(CEntity** targetEntity, CVehicle** targetVehicle, CVector* targetPos, CVector* dwCamLastPos, CVector* at, CVector* right, CVector* top, CVector* linearVelocity, float* linearSpeed, CVector* angularVelocity, float* angularSpeed, CColSphere* colSphere);
 	//* GetLookAlongGroundPos(CEntity*, CPed*, CVector&, CVector&)
 	//* GetLookFromLampPostPos(CEntity*, CPed*, CVector&, CVector&)
 	//* GetLookOverShoulderPos(CEntity*, CPed*, CVector&, CVector&)

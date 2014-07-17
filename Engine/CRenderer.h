@@ -19,7 +19,7 @@ public:
 	void RenderFadingInEntities();
 	* RenderFadingInUnderwaterEntities()
 	* RenderFirstPersonVehicle()
-	* RenderOneNonRoad(CEntity*)
+	void RenderOneNonRoad(CEntity* entity);
 	* RenderOneRoad(CEntity*)
 	void RenderRoads();
 	* RequestObjectsInDirection(CVector const&, float, int)

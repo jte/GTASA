@@ -1,5 +1,8 @@
 #include "StdInc.h"
 
+static bool bGammaChanged;
+static D3DGAMMARAMP savedGamma;
+
 static RwBool Initialize(void)
 {
     RsGlobal.appName = RWSTRING("GTA: San Andreas");
@@ -31,8 +34,8 @@ static void Terminate3D(void)
     if(bGammaChanged)
 	{
 		IDirect3DDevice9 *pDevice = (IDirect3DDevice9*)RwD3D9GetCurrentD3DDevice();
-		//pDevice->0x54(0, 1, uiSavedGamma);
-		bGammaChanged = false;
+        pDevice->SetGammaRamp(0, D3DSGR_CALIBRATE, &savedGamma);
+		bGammaChanged = false; 
 	}
     RsRwTerminate();
 }
@@ -58,24 +61,6 @@ static RwBool AttachPlugins(void)
            PipelinePluginAttach();
 }
 
-static void Render(void)
-{
-    RwCameraClear(Camera, &BackgroundColor, rwCAMERACLEARZ|rwCAMERACLEARIMAGE);
-
-    if( RwCameraBeginUpdate(Camera) )
-    {
-
-        RwCameraEndUpdate(Camera);
-    }
-
-    /* 
-     * Display camera's raster...
-     */
-    RsCameraShowRaster(Camera);
-
-    return;
-}
-
 static void Idle(void *param)
 {
     // TODO: some more timer stuff at start
@@ -89,20 +74,20 @@ static void Idle(void *param)
     bool bOk = param;
     if(bOk)
     {
-        if(FrontEndMenuManager.bMenuActive || RsCameraShowRaster(Camera) == 2)
+        if(FrontEndMenuManager.bMenuActive)
         {
+            RsCameraShowRaster(Scene.Camera);
             CDraw::CalculateAspectRatio();
-            CameraSize(Camera, (RwRect *)param, tan(CDraw::ms_fFOV * 0.0087266), CDraw::ms_fAspectRatio);
-            CVisibilityPlugins::SetRenderWareCamera(Camera);
-            RwCameraClear(Camera, gColourTop, 2);
-            bool bCamOk = RsCameraBeginUpdate(Camera);
-            if(!bCamOk)
+            CameraSize(Scene.Camera, (RwRect *)param, tan(CDraw::GetFOV() * M_PI/360), CDraw::GetAspectRatio());
+            CVisibilityPlugins::SetRenderWareCamera(Scene.Camera);
+            RwCameraClear(Scene.Camera, gColourTop, 2);
+            if(!RsCameraBeginUpdate(Scene.Camera))
             {
-                return bCamOk;
+                return false;
             }
             goto LABEL_16;
         }
-        RwV2D mousePos;
+        RwV2d mousePos;
         mousePos.x = RsGlobal.maximumWidth * 0.5;
         mousePos.y = RsGlobal.maximumHeight * 0.5;
         RsMouseSetPos(&mousePos);
@@ -194,7 +179,7 @@ RsEventStatus AppEventHandler(RsEvent event, void *param)
 
         case rsCAMERASIZE:
         {
-            CameraSize(Scene.Camera, (RwRect *)param, tan(CDraw::ms_fFOV * 0.0087266), DEFAULT_ASPECTRATIO);
+            CameraSize(Scene.Camera, (RwRect *)param, tan(CDraw::GetFOV() * M_PI / 360), DEFAULT_ASPECTRATIO);
             return rsEVENTPROCESSED;
         }
 

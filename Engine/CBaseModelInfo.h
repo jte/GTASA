@@ -33,14 +33,27 @@ public:
 	void SetTexDictionary(char const*, char const*);
 	void Shutdown();
 	~CBaseModelInfo();
+
+    //
+    uint32_t GetHashKey() const;
+    uint16_t GetRefCount() const;
+    uint16_t GetTextureDictionary() const;
+    uint8_t GetAlpha() const;
+    uint8_t Get2dEffectCount() const;
+    uint16_t Get2dEffectIndex() const;
+    uint16_t GetObjectInfoIndex() const;
+    CColModel* GetColModel() const;
+    float GetLoadDistanceUnscaled() const;
+    RwObject* GetRwObject() const;
+    bool GetIsRoad() const;
 private:
-    size_t m_uiHashKey;
-    uint16_t m_usRefCount;
-    int16_t m_usTextureDictionary;
-    uint8_t m_ucAlpha;
-    uint8_t m_uc2DFxCount;
-    uint16_t m_uc2DIndex;
-    uint16_t m_ucObjectInfoIndex;
+    uint32_t m_hashKey;
+    uint16_t m_refCount;
+    uint16_t m_textureDictionary;
+    uint8_t m_alpha;
+    uint8_t m_2dEffectCount;
+    uint16_t m_2dEffectIndex;
+    uint16_t m_objectInfoIndex;
     // 0x08 - bHasCollisionModel
     unsigned char           ucDynamicIndex: 8;          // +16
 
@@ -71,7 +84,7 @@ private:
     unsigned char           bDontCollideWithFlyer: 1;           // CAtomicModelInfo::SetDontCollideWithFlyer(unsigned int)
     unsigned char           bHasComplexHierarchy: 1;            // CClumpModelInfo::SetHasComplexHierarchy(unsigned int)
     unsigned char           bWetRoadReflection: 1;              // CAtomicModelInfo::SetWetRoadReflection(unsigned int)
-    CColModel *pColModel;
-    float fLoadDistanceUnscaled;
-    RwObject *pRwObject;
+    CColModel* m_colModel;
+    float m_loadDistanceUnscaled;
+    RwObject* m_rwObject;
 };

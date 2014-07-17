@@ -84,13 +84,13 @@ public:
 	static RpAtomic* RenderHeliTailRotorAlphaCB(RpAtomic *pAtomic);
 	//* RenderObjNormalAtomic(RpAtomic*);
 	static void RenderOrderedList(CLinkList<AlphaObjectInfo>& list);
-	//* RenderPedCB(RpAtomic*)
+    RpAtomic* RenderPedCB(RpAtomic* atomic);
 	//* RenderPlayerCB(RpAtomic*)
 	static void RenderReallyDrawLastObjects();
 	RpAtomic* RenderTrainHiDetailAlphaCB(RpAtomic* atomic);
 	RpAtomic* RenderTrainHiDetailCB(RpAtomic* atomic);
-	//* RenderVehicleHiDetailAlphaCB(RpAtomic*)
-	//* RenderVehicleHiDetailAlphaCB_BigVehicle(RpAtomic*)
+	RpAtomic* RenderVehicleHiDetailAlphaCB(RpAtomic* atomic);
+	RpAtomic* RenderVehicleHiDetailAlphaCB_BigVehicle(RpAtomic* atomic);
 	//* RenderVehicleHiDetailAlphaCB_Boat(RpAtomic*)
 	RpAtomic* RenderVehicleHiDetailCB(RpAtomic* atomic);
 	//* RenderVehicleHiDetailCB_BigVehicle(RpAtomic*)
@@ -113,13 +113,14 @@ public:
 	//* SetRenderWareCamera(RwCamera*)
 	//* SetUserValue(RpAtomic*, unsigned short)
 	//* SetupRenderFadingAtomic(CBaseModelInfo*, int)
-	void SetupVehicleVariables(RpClump* clump);
+	static void SetupVehicleVariables(RpClump* clump);
 	//* Shutdown()
 	//* VehicleVisibilityCB(RpClump*)
 	//* VehicleVisibilityCB_BigVehicle(RpClump*)
 
     // 
     static bool CanRenderAtomic(RpAtomic* atomic, float& dot);
+    static bool CanRenderAtomicBigVeh(RpAtomic* atomic, float& dot);
 protected:
 private:
 	static CLinkList<AlphaObjectInfo> m_alphaBoatAtomicList;

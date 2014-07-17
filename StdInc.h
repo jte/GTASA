@@ -84,10 +84,10 @@ struct Scene_t
 #include "Engine\CompressedQuaternion.h"
 
 // Collision Engine
-/*
 #include "Engine\CColModel.h"
-#include "Engine\CCollision.h"
 #include "Engine\CCollisionData.h"
+/*
+#include "Engine\CCollision.h"
 #include "Engine\CColBox.h"
 #include "Engine\CColDisk.h"
 #include "Engine\CColLine.h"
@@ -99,10 +99,15 @@ struct Scene_t
 //
 
 #include "CGame.h"
+#include "Engine\CSimpleTransform.h"
 #include "Engine\Entity\CEntity.h"
 #include "Engine\CModelInfo.h"
 #include "Engine\CVehicleModelInfo.h"
+
+// <Camera
 #include "Engine\Camera\CCam.h"
+#include "Engine\Camera\CCamera.h"
+//
 
 // <Plugins
 #include "Engine\PipelinePlugin.h"
@@ -114,6 +119,8 @@ struct Scene_t
 #include "Engine\CCustomBuildingDNPipeline.h"
 //
 
+#include "Engine\CDraw.h"
+
 extern CMatrixLinkList g_MatrixLinkList;
 extern RpLight* pDirect;
 extern RpLight* pAmbient;
@@ -121,11 +128,8 @@ extern RpLight* pAmbient;
 #define DEFAULT_SCREEN_WIDTH (640)
 #define DEFAULT_SCREEN_HEIGHT (480)
 
-#ifdef WIDE_SCREEN
-#define DEFAULT_ASPECTRATIO (16.0f/9.0f)
-#else
+#define WIDE_ASPECTRATIO (16.0f/9.0f)
 #define DEFAULT_ASPECTRATIO (4.0f/3.0f)
-#endif
 
 #define DEFAULT_VIEWWINDOW (0.5f)
 
