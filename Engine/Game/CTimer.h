@@ -18,6 +18,8 @@ public:
 	static void UpdateVariables(float dt);
     static float GetTimeStep();
     static size_t GetFrameCounter();
+    //
+    static size_t GetCurrentTimeMs();
 private:
     static bool bSkipProcessThisFrame;
 	static bool bSlowMotionActive;

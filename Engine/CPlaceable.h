@@ -26,6 +26,7 @@ public:
     CVector GetAt() const;
     CVector GetRight() const;
     CVector GetTop() const;
+    void UpdateRwMatrix();
 protected:
 private:
     CSimpleTransform m_placement;

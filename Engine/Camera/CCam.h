@@ -25,7 +25,7 @@ public:
 	//* LookBehind()
 	//* LookLeft()
 	//* LookRight(bool)
-	//* Process()
+	void Process();
 	//* ProcessArrestCamOne()
 	//* ProcessArrestCamTwo()
 	//* ProcessDWBustedCam1(CPed*, bool)
@@ -58,7 +58,7 @@ public:
 	//* Process_FollowPedWithMouse(CVector const&, float, float, float)
 	//* Process_FollowPed_SA(CVector const&, float, float, float, bool)
 	//* Process_M16_1stPerson(CVector const&, float, float, float)
-	//* Process_Rocket(CVector const&, float, float, float, bool)
+	void Process_Rocket(const CVector& a2, float a3, float a4, float a5, bool a6);
 	//* Process_SpecialFixedForSyphon(CVector const&, float, float, float)
 	//* Process_WheelCam(CVector const&, float, float, float)
 	//* RotCamIfInFrontCar(CVector const&, float)

@@ -139,3 +139,15 @@ CVector CPlaceable::GetTop()
         return CVector(-sin(m_transform.angle), cos(m_transform.angle), 0.0f);
     }
 }
+
+void CPlaceable::UpdateRwMatrix()
+{
+    if(m_xyz)
+    {
+        m_xyz->UpdateMatrix(GetClumpFrame(m_rwObject)->modelling);
+    }
+    else
+    {
+        m_transform.UpdateRwMatrix(GetClumpFrame(m_rwObject)->modelling);
+    }
+}
