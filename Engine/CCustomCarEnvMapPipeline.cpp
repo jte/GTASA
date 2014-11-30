@@ -211,8 +211,8 @@ static void D3D9GetTransScaleVector(CustomEnvMapPipeMaterialData* data, RpAtomic
     float transScaleX = FixedPointToFloat<8>(data->transScaleX) * 50.0f;
     float transScaleY = FixedPointToFloat<8>(data->transScaleY) * 50.0f;
 
-    transScale->x = -((pos.x - (pos.x / transScaleX) * transScaleX) * 1.0f / transScaleX);
-    transScale->y = -((pos.y - (pos.y / transScaleY) * transScaleY) * 1.0f / transScaleY);
+    transScale->x = -((pos.x - floor(pos.x / transScaleX) * transScaleX) * 1.0f / transScaleX);
+    transScale->y = -((pos.y - floor(pos.y / transScaleY) * transScaleY) * 1.0f / transScaleY);
 }
 
 void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* object, RwUInt8 type, RwUInt32 flags)
@@ -221,7 +221,7 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
     RwUInt32 geometryFlags = atomic->geometry->flags;
     RwBool atomicFlag = CVisibilityPlugins::GetAtomicId(atomic) & 0x6000;
     _rwD3D9EnableClippingIfNeeded(object, type);
-    
+
     RwBool lighting = 0;
     RwD3D9GetRenderState(D3DRS_LIGHTING, &lighting);
     RwBool isLit = 0;
@@ -233,7 +233,7 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
     {
         isLit = 1;
         RwD3D9SetTexture(NULL, 0);
-        RwD3D9SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_ARGB(0xFF, 0, 0, 0)); 
+        RwD3D9SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_ARGB(0xFF, 0, 0, 0));
         RwD3D9SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
         RwD3D9SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
         RwD3D9SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2);
@@ -249,7 +249,7 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
     _rwD3D9SetStreams(resEntryHeader->vertexStream, resEntryHeader->useOffsets);
     RwD3D9SetVertexDeclaration((IDirect3DVertexDeclaration9*)resEntryHeader->vertexDeclaration);
     RxD3D9InstanceData* instancedData = (RxD3D9InstanceData*)(resEntryHeader + 1);
-    RwInt32 numMeshes = resEntryHeader->numMeshes; 
+    RwInt32 numMeshes = resEntryHeader->numMeshes;
     while(numMeshes--)
     {
         RpMaterial* material = instancedData->material;
@@ -318,7 +318,7 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
             RwD3D9SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2);
             RwD3D9SetTextureStageState(1, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
             RwD3D9SetTextureStageState(1, D3DTSS_ALPHAARG2, D3DTA_CURRENT);
-            RwD3D9SetTextureStageState(1, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACENORMAL | 1); 
+            RwD3D9SetTextureStageState(1, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACENORMAL | 1);
             RwD3D9SetTextureStageState(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED | D3DTTFF_COUNT1 | D3DTTFF_COUNT2);
             RwD3D9SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
         }
@@ -395,7 +395,7 @@ void CCustomCarEnvMapPipeline::PreRenderUpdate()
 {
     memset(&gCarEnvMapLight, 0, sizeof(gCarEnvMapLight));
     RwFrame* lightFrame = (RwFrame*)pDirect->object.object.parent;
-    RwV3d lightDir = lightFrame->modelling.at; 
+    RwV3d lightDir = lightFrame->modelling.at;
     RwV3dNormalize(&lightDir, &lightDir);
     gCarEnvMapLight.Direction.x = lightDir.x;
     gCarEnvMapLight.Direction.y = lightDir.y;
@@ -640,7 +640,7 @@ RwBool CCustomCarEnvMapPipeline::RegisterPlugin()
     }
     m_fakeEnvMapPipeMatData.scaleX = FloatToFixedPoint<8>(1.0f);
     m_fakeEnvMapPipeMatData.scaleY = FloatToFixedPoint<8>(1.0f);
-    m_fakeEnvMapPipeMatData.transScaleX = FloatToFixedPoint<8>(1.0f); 
+    m_fakeEnvMapPipeMatData.transScaleX = FloatToFixedPoint<8>(1.0f);
     m_fakeEnvMapPipeMatData.transScaleY = FloatToFixedPoint<8>(1.0f);
     m_fakeEnvMapPipeMatData.shininess = FloatToFixedPoint<255>(1.0f);
     m_fakeEnvMapPipeMatData.texture = NULL;
@@ -723,7 +723,7 @@ void CCustomCarEnvMapPipeline::SetFxEnvTexture(RpMaterial* material, RwTexture* 
             }
             if(data->texture)
             {
-                data->texture->filterAddressing = 0x1102; 
+                data->texture->filterAddressing = 0x1102;
             }
         }
     }
@@ -732,7 +732,7 @@ void CCustomCarEnvMapPipeline::SetFxEnvTexture(RpMaterial* material, RwTexture* 
 static bool D3D9SupportsCarEnvMapPipeline()
 {
     const D3DCAPS9* caps = (const D3DCAPS9*)RwD3D9GetCaps();
-    return caps->MaxTextureBlendStages >= 2 && 
+    return caps->MaxTextureBlendStages >= 2 &&
            (caps->TextureOpCaps & D3DTEXOPCAPS_MULTIPLYADD) &&
            (caps->TextureOpCaps & D3DTEXOPCAPS_BLENDFACTORALPHA) &&
            caps->MaxSimultaneousTextures >= 2 &&
