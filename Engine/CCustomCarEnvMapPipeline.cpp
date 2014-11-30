@@ -211,8 +211,8 @@ static void D3D9GetTransScaleVector(CustomEnvMapPipeMaterialData* data, RpAtomic
     float transScaleX = FixedPointToFloat<8>(data->transScaleX) * 50.0f;
     float transScaleY = FixedPointToFloat<8>(data->transScaleY) * 50.0f;
 
-    transScale->x = -((pos.x - floor(pos.x / transScaleX) * transScaleX) * 1.0f / transScaleX);
-    transScale->y = -((pos.y - floor(pos.y / transScaleY) * transScaleY) * 1.0f / transScaleY);
+    transScale->x = -((pos.x - static_cast<RwInt32>(pos.x / transScaleX) * transScaleX) * 1.0f / transScaleX);
+    transScale->y = -((pos.y - static_cast<RwInt32>(pos.y / transScaleY) * transScaleY) * 1.0f / transScaleY);
 }
 
 void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* object, RwUInt8 type, RwUInt32 flags)
@@ -298,6 +298,9 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
             CustomEnvMapPipeMaterialData* envMapData = PLUGIN_ENVMAP(material, data);
             D3DMATRIX EnvMapTransform;
             RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)1);
+			// As the matrix is allocated on stack (unlike in R*'s code), the matrix should be zeroed first
+			// so untouched fields don't contain garbage
+			memset(&EnvMapTransform, 0, sizeof(EnvMapTransform));
             EnvMapTransform._11 = FixedPointToFloat<8>(envMapData->scaleX);
             EnvMapTransform._22 = FixedPointToFloat<8>(envMapData->scaleY);
             EnvMapTransform._33 = 1.0f;
@@ -329,6 +332,9 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
             D3DMATRIX AlphaBlendTransform;
             RwV2d scale;
             D3D9GetVectorForAlphaBlendingTransform(atomic, envMapAtmData, envMapData, &scale);
+			// As the matrix is allocated on stack (unlike in R*'s code), the matrix should be zeroed first
+			// so untouched fields don't contain garbage
+			memset(&AlphaBlendTransform, 0, sizeof(AlphaBlendTransform));
             AlphaBlendTransform._11 = 1.0f;
             AlphaBlendTransform._22 = 1.0f;
             AlphaBlendTransform._33 = 1.0f;
