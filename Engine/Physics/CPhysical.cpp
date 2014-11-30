@@ -23,26 +23,29 @@ void CPhysical::ApplyMoveForce(CVector force)
             force.z = 0.0f;
         }
         // a = F / m
-        m_linear_velocity += force / m_mass;
+        m_linearAcceleration += force / m_mass;
     }
 }
 
 void CPhysical::ApplyTurnForce(CVector force, CVector point)
 {
-    if(!m_disable_turn_force)
+    if(!m_disableTurnForce)
     {
-        CVector intertialTensor;
-        if(!m_infinite_mass)
+        CVector center;
+        if(!m_infiniteMass)
         {
-            intertialTensor = m_xyz->matrix * m_center_of_mass;
+            center = m_xyz->matrix * m_center_of_mass; // transform to world
         }
         if(m_disable_z_component)
         {
             point.z = 0.0;
             force.z = 0.0;
         }
-        dx = point - intertialTensor;
-        pThis->vecAngularVelocity += dx.CrossProduct(force) / m_mass;
+        const CVector displacement = point - center;
+        // tau = r x F
+        CVector torque = CrossProduct(displacement, force);
+        // a = tau / I
+        m_angularAcceleration += torque / m_mass;
     }
 }
 
@@ -50,12 +53,12 @@ void CPhysical::ApplyMoveSpeed()
 {
     if(bDisableZComponent || b0x2000)
     {
-        m_linear_velocity = CVector(0.0, 0.0, 0.0);
+        m_linearAcceleration = CVector(0.0, 0.0, 0.0);
     }
     else
     {
         // Euler integration
-        m_xyz->matrix.matrix.pos += CTimer::GetTimeStep() * m_vecLinearVelocity;
+        m_xyz->matrix.matrix.pos += m_linearAcceleration * CTimer::GetTimeStep();
     }
 }
 
@@ -63,17 +66,17 @@ void CPhysical::ApplyTurnSpeed()
 {
     if(b0x2000)
     {
-        m_vecAngularVelocity = 0;
+        m_angularAcceleration = CVector(0.0f, 0.0f, 0.0f);
     }
     else
     {
-        CVector dt_avel = m_angular_velocity * dt;
+        CVector dt_avel = m_angularAcceleration * CTimer::GetTimeStep();
         m_xyz->matrix.matrix.right += dt_avel.CrossProduct(m_xyz->matrix.matrix.right);
         m_xyz->matrix.matrix.top += dt_avel.CrossProduct(m_xyz->matrix.matrix.top);
         m_xyz->matrix.matrix.at += dt_avel.CrossProduct(m_xyz->matrix.matrix.at);
         if(!bInfiniteMass && !bDisableZComponent)
         {
-            m_xyz->matrix.matrix.pos += dt_avel.CrossProduct(m_xyz * -m_center_of_mass);
+            m_xyz->matrix.matrix.pos += dt_avel.CrossProduct(m_xyz->matrix.matrix * -m_center_of_mass);
         }
     }
 }
@@ -86,16 +89,13 @@ void CPhysical::ApplyGravity()
         {
             if(bInfiniteMass)
             {
-                CVector gravity(0.0f, dt * m_mass * -0.008f, 0.0f);
+                CVector gravity(0.0f, CTimer::GetTimeStep() * m_mass * -0.008f, 0.0f);
                 CVector inertiaTensor = m_xyz->matrix * m_center_of_mass;
                 ApplyForce(gravity, inertiaTensor, true);
             }
-            else
+            else if(bUsesCollision)
             {
-                if(bUsesCollision)
-                {
-                    m_linear_velocity.z -= dt * 0.00800000037997961;
-                }
+                m_linearAcceleration.z -= dt * 0.00800000037997961;
             }
         }
     }
@@ -108,7 +108,7 @@ void CPhysical::ApplyForce(CVector force, CVector point, bool apply_rotation)
     if(!bInfiniteMass && !bDisableZComponent)
     {
         // a = F / m
-        m_linear_velocity += vecForce / m_mass;
+        m_linearAcceleration += vecForce / m_mass;
     }
     if(!bDisableTurnForce && apply_rotation)
     {
@@ -168,20 +168,36 @@ bool CPhysical::GetHasCollidedWithAnyObject()
     return false;  
 }
 
-void CPhysical::ApplySpringCollision(float k, CVector &force, CVector &point, float damp, float bias, float& dx)
+void CPhysical::ApplySpringCollision(float stiffness, CVector& force, CVector& point, float damp, float bias, float& dx)
 {
-    damp = 1.0 - damp;
+    damp = 1.0f - damp;
     if(damp > 0.0)
     {
-        float dt_local = dt;
-        if(dt >= 3.0)
-        {
-            dt_local = 3.0;
-        }
+        float dt = ClampMax(CTimer::GetTimeStep(), 3.0f);
         // F = -k*x
-        dx = damp * m_mass * k * 0.01600000075995922 * bias * dt_local;
+        dx = stiffness * (damp * m_mass * 1.0f/62.5f * bias * dt);
         force *= -dx;
         ApplyForce(force, point, true);
+    }
+}
+
+void CPhysical::ApplySpringCollisionAlt(float stiffness, CVector& force, CVector& point, float damp, float bias, CVector& alt, float& dx)
+{
+    damp = 1.0f - damp;
+    if(damp > 0.0f)
+    {
+        if(DotProduct(point, alt) > 0.0f)
+        {
+            alt *= -1.0f;
+        }
+        float dt = ClampMax(CTimer::GetTimeStep(), 3.0f);
+        dx = damp * dt * mMass * stiffness * bias * 1.0f/62.5f;
+        if(m0x01)
+        {
+            dx *= 0.75;
+        }
+        alt *= dx;
+        ApplyForce(alt, point, true);
     }
 }
 

@@ -49,7 +49,28 @@ public:
         t.z = z * rhs;
         return t;
     }
-
+    CVector& operator*=(const float& rhs)
+    {
+        x *= rhs;
+        y *= rhs;
+        z *= rhs;
+        return *this;
+    }
+    CVector operator/(const float& rhs)
+    {
+        CVector t;
+        t.x = x / rhs;
+        t.y = y / rhs;
+        t.z = z / rhs;
+        return t;
+    }
+    CVector& operator+=(const CVector& rhs)
+    {
+        x += rhs.x;
+        y += rhs.y;
+        z += rhs.z;
+        return *this;
+    }
     float x,y,z;
 };
 

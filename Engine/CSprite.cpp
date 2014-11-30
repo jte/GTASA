@@ -2,7 +2,7 @@
 
 bool CSprite::CalcScreenCoors(const RwV3d& worldPos, RwV3d* viewPos, float* screenX, float* screenY, bool checkFarClip, bool checkNearClip)
 {
-    CVector viewPos = TheCamera.CameraViewMatrix * worldPos;
+    viewPos = TheCamera.CameraViewMatrix * worldPos;
     if(checkNearClip)
     {
 	    if(viewPos->z - 1.0f <= CDraw::GetNearClip())

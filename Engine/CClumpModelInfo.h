@@ -1,12 +1,12 @@
 #pragma once
 
-class CClumpModelInfo : public CBaseModelInfo
+class CClumpModelInfo : protected CBaseModelInfo
 {
 public:
 	void ConvertAnimFileIndex();
 	RpClump *CreateInstance();
 	RpClump *CreateInstance(RwMatrixTag *pMatrix);
-	//* DeleteRwObject()
+	void DeleteRwObject();
 	//* FillFrameArray(RpClump*, RwFrame**)
 	//* FillFrameArrayCB(RwFrame*, void*)
 	//* FindFrameFromIdCB(RwFrame*, void*)

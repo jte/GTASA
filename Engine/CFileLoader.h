@@ -30,7 +30,7 @@ public:
 	//* LoadEntryExit(char const*)
 	//* LoadGarage(char const*)
 	//* LoadLevel(char const*)
-	//* LoadLine(int)
+	static const char* LoadLine(int fp);
 	//* LoadLine(unsigned char**, int&)
 	//* LoadObject(char const*)
 	//* LoadObjectInstance(CFileObjectInstance*, char const*)
@@ -57,5 +57,5 @@ public:
 	//* StartLoadClumpFile(RwStream*, unsigned int)
 protected:
 private:
-    static char *ms_line;
+    static char ms_line[512];
 };

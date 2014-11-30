@@ -46,7 +46,7 @@ public:
     float GetLoadDistanceUnscaled() const;
     RwObject* GetRwObject() const;
     bool GetIsRoad() const;
-private:
+protected:
     uint32_t m_hashKey;
     uint16_t m_refCount;
     uint16_t m_textureDictionary;

@@ -44,3 +44,4 @@ void GetSlerpParams(const CQuaternion& first, const CQuaternion& second, float& 
 RwFrame* GetAtomicFrame(RpAtomic* atomic);
 RwFrame* GetClumpFrame(RpClump* clump);
 const float DotProduct(const RwV3d& first, const RwV3d& second);
+RpAtomic *Get2DEffectAtomic(RpClump *clump);

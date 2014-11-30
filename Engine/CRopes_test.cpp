@@ -1,16 +1,4 @@
-﻿/* not actual name for procedure*/
-CVector CEntity::GetPos()
-{
-    if(m_xyz)
-    {
-        return m_xyz->matrix.matrix.pos;
-    }
-    else
-    {
-        return placement.pos;
-    }
-}
-
+﻿
 void CRope::Update()
 {
     #define MAX_SEGMENTS 32

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CRGBA.h"
+
 class CDraw
 {
 public:
@@ -9,13 +11,16 @@ public:
     //
     static float GetFOV();
     static float GetAspectRatio();
+    static float GetFarClip();
+    static float GetLODDistance();
+    static float GetNearClip();
 protected:
 private:
     static bool Drawn;
 	//* FadeBlue
 	//* FadeGreen
 	//* FadeRed
-	//* FadeValue
+	static CRGBA FadeValue;
 	static bool NotDrawn;
 	static float ms_fAspectRatio;
 	static float ms_fFOV;

@@ -24,8 +24,8 @@ public:
 	//* ApplySoftCollision(CEntity*, CColPoint&, float&)
 	//* ApplySoftCollision(CPhysical*, CColPoint&, float&, float&)
 	//* ApplySpeed()
-	void ApplySpringCollision(float k, CVector&, CVector&, float, float, float&);
-	//* ApplySpringCollisionAlt(float, CVector&, CVector&, float, float, CVector&, float&)
+	void ApplySpringCollision(float stiffness, CVector& force, CVector& point, float damp, float bias, float& dx);
+	void ApplySpringCollisionAlt(float stiffness, CVector& force, CVector& point, float damp, float bias, CVector& alt, float& dx);
 	//* ApplySpringDampening(float, float, CVector&, CVector&, CVector&)
 	//* ApplySpringDampeningOld(float, float, CVector&, CVector&, CVector&)
 	void ApplyTurnForce(CVector, CVector);
@@ -67,12 +67,12 @@ public:
         int m_pad1;
         float m_last_collision_check;
         uint32_t m_0x01 : 1;
-        uint32_t m_apply_gravity : 1;
-        uint32_t m_disableFriction : 1; // CHECKED
+        uint32_t mApplyGravity : 1;
+        uint32_t mDisableFriction : 1; // CHECKED
         uint32_t m_collidable : 1;
-        uint32_t m_disableTurnForce : 1; // CHECKED
+        uint32_t mDisableTurnForce : 1; // CHECKED
         uint32_t m_disable_z_component : 1;
-        uint32_t m_infinite_mass : 1;
+        uint32_t m_infiniteMass : 1;
         uint32_t m_0x80 : 1;
         uint32_t m_submerged_in_water : 1;
         uint32_t m_on_solid_surface : 1;
@@ -99,8 +99,8 @@ public:
         uint32_t m_0x40000000 : 1;
         uint32_t m_0x80000000 : 1;
 
-        CVector m_linear_velocity;
-        CVector m_angular_velocity;
+        CVector m_linearAcceleration;
+        CVector m_angularAcceleration;
         CVector m_friction_move_force;
         CVector m_friction_turn_force;
         CVector m_vecUnk1;

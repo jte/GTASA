@@ -1,5 +1,5 @@
 #include "StdInc.h"
-/*
+
 void CClumpModelInfo::Init()
 {
     m_AnimId = -1;
@@ -26,14 +26,14 @@ static RpAtomic *SetAtomicHAnimHierarchyCB(RpAtomic *pAtomic, void *pData)
 
 RpClump *CClumpModelInfo::CreateInstance()
 {
-    if(pRwObject == NULL)
+    if (GetRwObject() == NULL)
     {
         return NULL;
     }
     AddRef();
-    RpClump *pCloned = RpClumpClone(pRwObject);
+    RpClump *pCloned = RpClumpClone((RpClump*)GetRwObject());
     RpAtomic *pFirst = GetFirstAtomic(pCloned);
-    if(pFirst)
+    if (pFirst)
     {
         if(RpSkinGeometryGetSkin(pFirst->geometry) != NULL)
         {
@@ -47,11 +47,11 @@ RpClump *CClumpModelInfo::CreateInstance()
             }
         }
     }
-    if(bIsRoad)
+    if (GetIsRoad())
     {
         RpAnimBlendClumpInit(pCloned);
-        CAnimBlendHierarchy *pAnim = CAnimManager::GetAnimationByID(m_uiHashKey, &CAnimManager::AnimBlocks[m_AnimId]);
-        if(pAnim)
+        CAnimBlendHierarchy *pAnim = CAnimManager::GetAnimationByID(GetHashKey(), &CAnimManager::AnimBlocks[m_AnimId]);
+        if (pAnim)
         {
             CAnimManager::BlendAnimation(pCloned, pAnim, 2, 1.0f);
         }
@@ -62,7 +62,7 @@ RpClump *CClumpModelInfo::CreateInstance()
 
 RpClump *CClumpModelInfo::CreateInstance(RwMatrixTag *pMatrix)
 {
-    if(pRwObject == NULL)
+    if(GetRwObject() == NULL)
     {
         return NULL;
     }
@@ -88,4 +88,32 @@ void CClumpModelInfo::ConvertAnimFileIndex()
         delete[] m_AnimFile;
         m_AnimId = animId;
     }
-}*/
+}
+
+void CClumpModelInfo::DeleteRwObject()
+{
+    RpClump *pClump = (RpClump*)m_rwObject;
+    if (pClump)
+    {
+        v3 = Get2DEffectAtomic(m_rwObject);
+        if ( v3 )
+        {
+            v4 = *(_DWORD *)(g2dEffectPluginOffset + *(_DWORD *)(v3 + 24));
+            if ( v4 )
+            v5 = *(_DWORD *)v4;
+            else
+            LOBYTE(v5) = 0;
+            pThis->uc2DFxCount -= v5;
+        }
+        RpClumpDestroy(pClump);
+        m_rwObject = 0;
+        RemoveTexDictionaryRef();
+        size_t animIndex = GetAnimFileIndex();
+        if (animIndex != -1)
+        {
+            CAnimManager::RemoveAnimBlockRef(animIndex);
+        }
+        if ( HIBYTE(pThis->flags) & 8 )
+            LOBYTE(v1) = CBaseModelInfo__DeleteCollisionModel(pThis);
+    }
+}

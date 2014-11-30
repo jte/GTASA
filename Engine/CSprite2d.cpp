@@ -11,7 +11,7 @@ void CSprite2d::InitPerFrame()
 {
     nextBufferVertex = 0;
     nextBufferIndex = 0;
-    RecipNearClip = 1.0 / Scene.Camera->nearPlane;
+    RecipNearClip = 1.0f / Scene.Camera->nearPlane;
     NearScreenZ = RWSRCGLOBAL(dOpenDevice).zBufferNear;
 }
 
@@ -90,14 +90,14 @@ void CSprite2d::DrawRect(const CRect& rect, const CRGBA& color)
 
 void CSprite2d::AddToBuffer(const CRect& rect, const CRGBA& color, float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4)
 {
-    SetVertices(&TempVertexBuffer[nextBufferVertex],
+/*    SetVertices(&TempVertexBuffer[nextBufferVertex],
                 rect,
                 color, color, color, color,
                 u1, v1,
                 u2, v2,
                 u3, v3,
                 u4, v4);
-    TempBufferRenderIndexList[nextBufferIndex + 0] = nextBufferVertex + 0;
+*/    TempBufferRenderIndexList[nextBufferIndex + 0] = nextBufferVertex + 0;
     TempBufferRenderIndexList[nextBufferIndex + 1] = nextBufferVertex + 1;
     TempBufferRenderIndexList[nextBufferIndex + 2] = nextBufferVertex + 2;
     TempBufferRenderIndexList[nextBufferIndex + 3] = nextBufferVertex + 3;

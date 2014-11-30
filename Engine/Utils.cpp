@@ -307,3 +307,25 @@ const float DotProduct(const RwV3d& first, const RwV3d& second)
 {
     return first.x * second.x + first.y * second.y + first.z * second.z;
 }
+
+RpAtomic *Get2DEffectAtomicCallback(RpAtomic *atomic, void *data)
+{
+    DWORD* v3 = *(DWORD*)atomic->geometry + g2dEffectPluginOffset)
+  v3 = *(_DWORD *)(g2dEffectPluginOffset + *(_DWORD *)(atomic + 24));
+  if ( v3 )
+  {
+    if ( *(_DWORD *)v3 )
+    {
+      *(_DWORD *)data = atomic;
+      result = 0;
+    }
+  }
+  return atomic;
+}
+
+RpAtomic *Get2DEffectAtomic(RpClump *clump)
+{
+    RpAtomic *atomic = NULL;
+    RpClumpForAllAtomics(clump, Get2DEffectAtomicCallback, &atomic);
+    return atomic;
+}

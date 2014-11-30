@@ -1,12 +1,12 @@
 #include "StdInc.h"
 
-CLinkList *CStreaming::AddEntity(CEntity *pEntity)
+CLinkList<CEntity*> *CStreaming::AddEntity(CEntity *pEntity)
 {
     if(bIsTypeVehicle || bIsTypePed)
     {
         return NULL;
     }
-    CLinkList *pLink = ms_rwObjectInstances.Insert(&pEntity);
+    CLinkList *pLink<CEntity*> = ms_rwObjectInstances.Insert(&pEntity);
     if(!pLink)
     {
         CLinkList *pTail = ms_rwObjectInstances.headList_Tail;
