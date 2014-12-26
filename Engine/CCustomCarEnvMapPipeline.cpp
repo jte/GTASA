@@ -224,7 +224,8 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
 
     RwBool lighting = 0;
     RwD3D9GetRenderState(D3DRS_LIGHTING, &lighting);
-    RwBool isLit = 0;
+    RwBool isLit;
+	RwBool renderDark = RpLightGetFlags(pDirect) & rpLIGHTLIGHTATOMICS && CVisibilityPlugins::GetAtomicId(atomic) & 0x4000;	// R* added this in 1.01
     if(lighting || flags & rxGEOMETRY_PRELIT)
     {
         isLit = 0;
@@ -275,7 +276,7 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
         {
             applySpecMap = *materialFlags & 4;
         }
-        if(applySpecMap)
+        if(applySpecMap && !renderDark)	// R* added renderDark in 1.01)
         {
             CustomSpecMapPipeMaterialData* specMapData = PLUGIN_SPECMAP(material, data);
             RwD3D9SetLight(1, &gCarEnvMapLight);
@@ -293,7 +294,7 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
         }
         RwD3D9SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
         RwD3D9SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
-        if(applyEnvMap)
+        if(applyEnvMap && !renderDark)	// R* added renderDark in 1.01
         {
             CustomEnvMapPipeMaterialData* envMapData = PLUGIN_ENVMAP(material, data);
             D3DMATRIX EnvMapTransform;
@@ -325,7 +326,7 @@ void CCustomCarEnvMapPipeline::CustomPipeRenderCB(RwResEntry* repEntry, void* ob
             RwD3D9SetTextureStageState(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED | D3DTTFF_COUNT1 | D3DTTFF_COUNT2);
             RwD3D9SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
         }
-        if(applyAlphaBlending)
+        if(applyAlphaBlending && !renderDark)	// R* added renderDark in 1.01)
         {
             CustomEnvMapPipeAtomicData* envMapAtmData = AllocEnvMapPipeAtomicData(atomic);
             CustomEnvMapPipeMaterialData* envMapData = PLUGIN_ENVMAP(material, data);
