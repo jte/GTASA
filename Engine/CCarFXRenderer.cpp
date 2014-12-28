@@ -88,3 +88,31 @@ RpMaterial* CCarFXRenderer::MaterialRemapDirtCB(RpMaterial* material, void* data
     }
     return material;
 }
+
+void CCarFXRenderer::InitialiseDirtTexture()
+{
+    int16_t id = CTxdStore::FindTxdSlot("vehicle");
+    CTxdStore::PushCurrentTxd();
+    CTxdStore::SetCurrentTxd(id);
+    RwTexture* texture = RwTextureRead("vehiclegrunge256", 0);
+    RwRaster* raster = texture->raster;
+    texture->filterAddressing = 2;
+    for (size_t texId = 0; texId < 16; texId++)
+    {
+        ms_aDirtTextures[texId] = CClothesBuilder::CopyTexture(texture);
+        RwTextureSetName(ms_aDirtTextures[texId], "vehiclegrunge256");
+        RwRaster* dirtRaster = ms_aDirtTextures[texId]->raster;
+        RwUInt8** dirtArray = (RwUInt8**)RwRasterLock(dirtRaster, 0, 3);
+        for (size_t i = 0; i != raster->height; i++)
+        {
+            for (size_t j = 0; j != raster->width; j++)
+            {
+                dirtArray[i][j]   = ((texId * 255) / 16) + ((texId * dirtArray[i][j])   / 16);
+                dirtArray[i][j+1] = ((texId * 255) / 16) + ((texId * dirtArray[i][j+1]) / 16);
+                dirtArray[i][j+2] = ((texId * 255) / 16) + ((texId * dirtArray[i][j+2]) / 16);
+            }
+        }
+        RwRasterUnlock(dirtRaster);
+    }
+    CTxdStore::PopCurrentTxd();
+}

@@ -8,7 +8,7 @@ public:
 	static void CustomCarPipeClumpSetup(RpClump* clump);
 	static float GetFxEnvMapLightMult();
 	static bool Initialise();
-	//* InitialiseDirtTexture();
+	static void InitialiseDirtTexture();
 	static bool IsCCPCPipelineAttached(RpAtomic* atomic);
 	static RpMaterial* MaterialRemapDirtCB(RpMaterial* material, void* data);
 	static void  PreRenderUpdate();
