@@ -19,5 +19,5 @@ public:
 	static void Shutdown();
 protected:
 private:
-    static RwTexture* ms_aDirtTextures[10];
+    static RwTexture* ms_aDirtTextures[16];
 };

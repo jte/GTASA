@@ -7,7 +7,7 @@ bool CCarFXRenderer::Initialise()
 
 void CCarFXRenderer::Shutdown()
 {
-    for(size_t i = 0; i < sizeof(*ms_aDirtTextures); i++)
+    for(size_t i = 0; i < ELEMS_COUNT(ms_aDirtTextures); i++)
     {
         RwTextureDestroy(ms_aDirtTextures[i]);
     }
@@ -97,7 +97,7 @@ void CCarFXRenderer::InitialiseDirtTexture()
     RwTexture* texture = RwTextureRead("vehiclegrunge256", 0);
     RwRaster* raster = texture->raster;
     texture->filterAddressing = 2;
-    for (size_t texId = 0; texId < 16; texId++)
+    for (size_t texId = 0; texId < ELEMS_COUNT(ms_aDirtTextures); texId++)
     {
         ms_aDirtTextures[texId] = CClothesBuilder::CopyTexture(texture);
         RwTextureSetName(ms_aDirtTextures[texId], "vehiclegrunge256");
