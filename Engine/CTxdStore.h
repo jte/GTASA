@@ -8,12 +8,13 @@ public:
     uint16_t parentIndex;
     uint32_t hash;
 };
+C_ASSERT(sizeof(CTexDictionaryEntry) == 12);
 
 class CTxdStore
 {
 public:
 	static void AddRef(int iIndex); /// DONE
-	static void AddTxdSlot(char const *name, char const*, bool); // DONE
+	static uint32_t AddTxdSlot(char const *name); // DONE
 	static void Create(int index); // DONE
 	static int16_t FindTxdSlot(const char *szName); // DONE
 	static int16_t FindTxdSlotFromHashKey(int hash); // DONE

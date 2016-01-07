@@ -61,7 +61,24 @@ public:
         }
         m_links = NULL;
     }
-
+    void InsertLink(CLink<_T>* link)
+    {
+        link->prev->next = link->next;
+        link->next->prev = link->prev;
+        link->prev = m_head.prev;
+        m_head.prev->next = link;
+        link->next = &m_head;
+        m_head.prev = link;
+    }
+    void RemoveLink(CLink<_T>* link)
+    {
+        link->prev->next = link->next;
+        link->next->prev = link->prev;
+        link->prev = m_tail.head;
+        m_tail.head->next = link;
+        link->next = m_tail.next;
+        m_tail.head = link;
+    }
     CLink<_T>* Insert(const _T& item)
     {
         CLink<_T>* link = m_tail.head;
@@ -70,12 +87,7 @@ public:
             return 0;
         }
         link->data = item;
-        link->prev->next = link->next;
-        link->next->prev = link->prev;
-        link->prev = m_head.prev;
-        m_head.prev->next = link;
-        link->next = &m_head;
-        m_head.prev = link;
+        InsertLink(link);
         return link;
     }
 
@@ -106,6 +118,14 @@ public:
             unsorted->head->tail = sorted;
         }
         return sorted;
+    }
+    CLink<_T>& GetHead()
+    {
+        return m_head;
+    }
+    CLink<_T>& GetTail()
+    {
+        return m_tail;
     }
 private:
     CLink<_T> m_head;

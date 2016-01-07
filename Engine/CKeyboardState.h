@@ -1,0 +1,52 @@
+#pragma once
+
+class CKeyboardState
+{
+public:
+	uint16_t FKeys[12];
+	uint16_t standardKeys[256];
+	uint16_t esc;
+	uint16_t insert;
+	uint16_t del;
+	uint16_t home;
+	uint16_t end;
+	uint16_t pgup;
+	uint16_t pgdn;
+	uint16_t up;
+	uint16_t down;
+	uint16_t left;
+	uint16_t right;
+	uint16_t scroll;
+	uint16_t pause;
+	uint16_t numlock;
+	uint16_t div;
+	uint16_t mul;
+	uint16_t sub;
+	uint16_t add;
+	uint16_t enter;
+	uint16_t decimal;
+	uint16_t num1;
+	uint16_t num2;
+	uint16_t num3;
+	uint16_t num4;
+	uint16_t num5;
+	uint16_t num6;
+	uint16_t num7;
+	uint16_t num8;
+	uint16_t num9;
+	uint16_t num0;
+	uint16_t back;
+	uint16_t tab;
+	uint16_t capslock;
+	uint16_t extenter;
+	uint16_t lshift;
+	uint16_t rshift;
+	uint16_t shift;
+	uint16_t lctrl;
+	uint16_t rctrl;
+	uint16_t lmenu;
+	uint16_t rmenu;
+	uint16_t lwin;
+	uint16_t rwin;
+	uint16_t apps;
+};

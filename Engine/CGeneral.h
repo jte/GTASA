@@ -4,12 +4,12 @@ class CGeneral
 {
 public:
 	//* GetATanOfXY(float, float);
-	//* GetAngleBetweenPoints(float, float, float, float)
-	//* GetNodeHeadingFromVector(float, float)
-	//* GetRadianAngleBetweenPoints(float, float, float, float)
+	static float GetAngleBetweenPoints(float x1, float y1, float x2, float y2);
+	static float GetNodeHeadingFromVector(float x, float y);
+	static float GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2);
 	//* GetRandomNumberInRange(float, float)
 	//* GetRandomNumberInRange(int, int)
 	//* LimitAngle(float)
 	//* LimitRadianAngle(float)
-	//* SolveQuadratic(float, float, float, float&, float&)
+	static bool SolveQuadratic(float, float, float, float&, float&);
 };

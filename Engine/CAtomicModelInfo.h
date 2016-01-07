@@ -1,19 +1,23 @@
 #pragma once
 
+#include "CBaseModelInfo.h"
+
 class CAtomicModelInfo : public CBaseModelInfo
 {
 public:
-	virtual CAtomicModelInfo* AsAtomicModelInfoPtr();
-	* CreateInstance()
-	* CreateInstance(RwMatrixTag*)
-	* DeleteRwObject()
-	* GetAtomicFromDistance(float)
-	* GetModelType()
-	* GetRwModelType()
-	* Init()
+    // virtual methods
+    virtual ~CAtomicModelInfo();
+	virtual CAtomicModelInfo *AsAtomicModelInfoPtr();
+    virtual size_t GetModelType();
+    virtual void DeleteRwObject(); 
+	virtual void Init();
+    virtual size_t GetRwModelType();
+    virtual void* CreateInstance(RwMatrixTag* matrix);
+    virtual void* CreateInstance(); 
 	virtual void SetAtomic(RpAtomic* atomic);
-	* SetupVehicleUpgradeFlags(char const*)
-	* ~CAtomicModelInfo()
-protected:
-private:
+
+	//
+    
+	RpAtomic* GetAtomicFromDistance(float distance);
+	// * SetupVehicleUpgradeFlags(char const*)
 };

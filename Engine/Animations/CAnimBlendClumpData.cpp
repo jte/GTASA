@@ -45,7 +45,12 @@ size_t CAnimBlendClumpData::GetAnimBlendNodeCount() const
     return m_animBlendNodeCount; 
 }
 
-SClumpAnimAssoc* CAnimBlendClumpData::GetClumpAnimAssoc() const
+SClumpAnimAssoc* CAnimBlendClumpData::GetClumpAnimAssoc()
 {
-    return m_clumpAnimAssoc;
+    return m_assoc;
+}
+
+void CAnimBlendClumpData::SetClumpAnimAssoc(SClumpAnimAssoc *assoc)
+{
+    m_assoc = assoc;
 }

@@ -1,114 +1,6 @@
 #include "StdInc.h"
 
-#define rwID_2DEFFECT  (0xF8)
-
-#define PLUGIN_2DEFFECT(object, var) \
-    (RWPLUGINOFFSET(Plugin2dEffectDef, object, g2dEffectPluginOffset)->var)
-
 static RwInt32 g2dEffectPluginOffset = -1;
-
-struct Effect2dLightA
-{
-
-};
-
-struct Effect2dLightB
-{
-    RwRGBA color;
-    float coronaFarClip;
-    float pointLightRange;
-    float coronaSize;
-    float shadowSize;
-    uint8_t coronaShowMode;
-    uint8_t coronaEnableReflection;
-    uint8_t coronaFlareType;
-    uint8_t shadowColorMultiplier;
-    uint8_t flags16b;
-    RwTexture *pCoronaTexture;
-    RwTexture *pShadowTexture;
-    uint8_t shadowZDistance;
-};
-/*
-00000000 Effect2dDescriptorLightB struc ; (sizeof=0x40)
-00000000 header          Effect2dDescriptor ?
-00000010 color           RwRGBA ?
-00000014 coronaFarClip   dd ?
-00000018 pointLightRange dd ?
-0000001C coronaSize      dd ?
-00000020 shadowSize      dd ?
-00000024 flags16b        dw ?
-00000026 coronaShowMode  db ?
-00000027 coronaEnableReflection db ?
-00000028 coronaFlareType db ?
-00000029 shadowColorMultiplier db ?
-0000002A shadowZDistance db ?
-0000002B field_2B        db ?
-0000002C field_2C        db ?
-0000002D field_2D        db ?
-0000002E field_2E        db ?
-0000002F field_2F        db ?
-00000030 pCoronaTexture  dd ?
-00000034 pShadowTexture  dd ?
-00000038 field_38        dd ?
-0000003C field_3C        dd ?
-00000040 Effect2dDescriptorLightB ends
-*/
-
-struct Effect2dCoverPoint
-{
-    float dirxy[2];
-    uint32_t type;
-};
-
-struct Effect2dEscalator
-{
-    RwV3d bottom;
-    RwV3d top;
-    RwV3d end;
-    uint8_t direction;
-};
-
-struct Effect2dStreetSign
-{
-    RwV2d size;
-    RwV3d rotation;
-    uint16_t flags;
-    char *text;
-    uint32_t pad0;
-};
-
-struct Plugin2dEffectDescriptor
-{
-    RwV3d position;
-    uint32_t effect_type; /* actually 1 byte padded with 3 bytes */
-    union
-    {
-        // 0
-        Effect2dLightA lightA;
-        Effect2dLightB lightB;
-        // 1
-        char particle_effect[24];
-        // 7
-        Effect2dStreetSign street_sign;
-        // 8
-        uint32_t slotmachine_index;
-        // 9
-        Effect2dCoverPoint cover_point;
-        // 10
-        Effect2dEscalator escalator;
-    };
-};
-
-struct Plugin2dEffect
-{
-    uint32_t count;
-    Plugin2dEffectDescriptor entries[];
-};
-
-struct Plugin2dEffectDef
-{
-    Plugin2dEffect* data;
-};
 
 static void* Effect2dPluginConstructor(void* object, RwInt32 offset, RwInt32 size)
 {
@@ -399,11 +291,11 @@ static RwStream* Effect2dPluginRead(RwStream *stream, RwInt32 binaryLength, void
                 if (entry_size == 56)
                 {
                     RwStreamRead(stream, &v114, offset);
-                    v9->field_14 = v116;
                     v9->field_10 = v115;
-                    v9->field_20 = v119;
+                    v9->field_14 = v116;
                     v9->field_18 = v117;
                     v9->field_1C = v118;
+                    v9->field_20 = v119;
                     *(_DWORD *)&v9->field_2C = v122;
                     *(_DWORD *)&v9->field_24 = v120;
                     *(_DWORD *)&v9->field_28 = v121;
@@ -432,37 +324,26 @@ static RwStream* Effect2dPluginRead(RwStream *stream, RwInt32 binaryLength, void
                 }
             break;
             case 6: // Entry type 6 - EnEx markers; 44 or 40 bytes
-                v13 = offset;
-                v98 = 0;
-                v99 = 24;
-                if ( offset == 44 || offset == 40 )
+                if (entry_size == 44 || entry_size == 40)
                 {
-                RwStreamRead(stream, &v87, offset);
-                v31 = v87;
-                v32 = v89;
-                v9->field_14 = v88;
-                v33 = v91;
-                v9->field_10 = v31;
-                v34 = v90;
-                v9->field_20 = v33;
-                LOWORD(v33) = v94;
-                v9->field_18 = v32;
-                v35 = v92;
-                v9->field_1C = v34;
-                v36 = v93;
-                *(_WORD *)&v9->field_2C = v33;
-                *(_DWORD *)&v9->field_24 = v35;
-                LOBYTE(v35) = v95;
-                *(_DWORD *)&v9->field_28 = v36;
-                LOBYTE(v36) = v96;
-                v9->field_2E = v35;
-                v9->field_2F = v36;
-                strncpy(v11, &v97, 8u);
-                v37 = v99;
-                v38 = v100;
-                *v10 = v98;
-                BYTE1(v9->field_38) = v37;
-                BYTE2(v9->field_38) = v38;
+                    Effect2dEnExMarker &marker = entries->entries[i].marker;
+                    RwStreamRead(stream, &marker.rotation, sizeof(marker.rotation)); // 4 bytes
+                    RwStreamRead(stream, &marker.x_radius, sizeof(marker.x_radius)); // 4 bytes
+                    RwStreamRead(stream, &marker.y_radius, sizeof(marker.y_radius)); // 4 bytes
+                    RwStreamRead(stream, &marker.pos, sizeof(marker.pos)); // 12 bytes
+                    RwStreamRead(stream, &marker.angle, sizeof(marker.angle)); // 4 bytes
+                    RwStreamRead(stream, &marker.interior, sizeof(marker.interior)); // 2 bytes
+                    RwStreamRead(stream, &marker.flag1, sizeof(marker.flag1)); // 1 byte
+                    RwStreamRead(stream, &marker.flag2, sizeof(marker.flag2)); // 1 byte
+                    RwStreamRead(stream, &marker.name, sizeof(marker.name)); // 8 bytes
+                    if (entry_size == 44)
+                    {
+                        RwStreamRead(stream, &marker.sky_color, sizeof(marker.sky_color)); // 4 bytes
+                    }
+                    else
+                    {
+                        marker.sky_color = 24;
+                    }
                 }
             break;
             case 8: // Entry type 8 - Slotmachine-wheels

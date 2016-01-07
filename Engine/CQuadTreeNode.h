@@ -1,28 +1,37 @@
 #pragma once
 
+#include "CRect.h"
+#include "CPool.h"
+#include "CPtrNodeSingleLink.h"
+
+/* spatial division via quad trees */
+typedef void (*RectSectorMatchingCB)(const CRect&, void*);
+typedef void (*Vec2dSectorMatchingCB)(const CVector2D&, void*);
 class CQuadTreeNode
 {
 public:
-	void AddItem(void *pItem, CRect const &sector);
-	CQuadTreeNode(CRect const &sector, int);
-	void DeleteItem(void*);
+	void AddItem(void* item, const CRect& sector);
+	CQuadTreeNode(const CRect& sector, int numFreeNodes);
+	/*void DeleteItem(void*);
 	void DeleteItem(void*, CRect const&);
-	void FindSector(CRect const&);
-	void FindSector(CVector2D const&);
-	void ForAllMatching(CRect const&, void (*)(CRect const&, void*));
-	void ForAllMatching(CVector2D const&, void (*)(CVector2D const&, void*));
-	void GetAll(CPtrListSingleLink &pList);
-	void GetAllMatching(CRect const &sector, CPtrListSingleLink &pList);
-	void GetAllMatching(CVector2D const &vecSector, CPtrListSingleLink &pList);
-	bool InSector(CRect const &sector, int uiSubdivisionPart);
-	void InitPool();
+	*/
+    void ForAllMatching(const CRect& sector, RectSectorMatchingCB callback);
+	void ForAllMatching(const CVector2D& sector, Vec2dSectorMatchingCB callback);
+	/*void GetAll(CPtrListSingleLink &pList);
+	*/
+    void GetAllMatching(const CRect& sector, CPtrListSingleLink& list);
+    void GetAllMatching(const CVector2D& sector, CPtrListSingleLink& list);
+	/*void InitPool();
 	void operator delete(void *pMemory);
 	void *operator new(size_t uiSize);
-	~CQuadTreeNode();
+	~CQuadTreeNode();*/
+    int FindSector(const CRect& rect);
+    int FindSector(const CVector2D& vector);
+    bool InSector(const CRect& sector, int quadrant);
 private:
-    static CPool *ms_pQuadTreeNodePool;
+    static CPool<int>* m_quadTreeNodePool;
     CRect m_sector;
-    CPtrNodeSingleLink *m_pItemList;
-    CQuadTreeNode *m_pChildrens[4];
-    size_t m_uiChildrenUnusedNodeCount;
+    CPtrListSingleLink* m_itemList;
+    CQuadTreeNode* m_childrens[4];
+    size_t m_numFreeNodes;
 };

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CAnimBlendClumpData.h"
+
 class CAnimBlendStaticAssociation;
 class CAnimBlendNode;
 
@@ -35,7 +37,7 @@ public:
 	//* UpdateTimeStep(float, float)
 	//* ~CAnimBlendAssociation()
 
-    const struct SClumpAnimAssoc& GetClumpAnimAssoc() const;
+    struct SClumpAnimAssoc& GetClumpAnimAssoc();
 private:
     SClumpAnimAssoc m_assoc;
     CallbackType m_callbackType;

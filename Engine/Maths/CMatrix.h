@@ -4,13 +4,14 @@ class CVector;
 class CQuaternion;
 
 // NOTE: uses right-hand system 
-class CMatrix
+class CMatrix : public RwMatrixTag
 {
 public:
 	void Attach(RwMatrixTag *pOtherMat, bool bLink);
 	void AttachRW(RwMatrixTag*, bool);
 	CMatrix(CMatrix const &mat);
 	CMatrix(RwMatrixTag *pOtherMat, bool bLink);
+	CMatrix(RwMatrix *mat);
 	void CheckIntegrity();
 	void ConvertFromEulerAngles(float ex, float ey, float ez, int precision);
 	void ConvertToEulerAngles(float &ex, float &ey, float &ez, int precision);
@@ -41,11 +42,11 @@ public:
 	void UpdateMatrix(RwMatrixTag *pMat);                        
 	void UpdateRW() const;
 	void UpdateRwMatrix(RwMatrixTag *pRwMatrix) const;
+
 	CMatrix *operator+=(CMatrix const&);
 	CMatrix *operator=(CMatrix const &mat);
 	~CMatrix();
 //private:
-    RwMatrixTag m_matrix;
     RwMatrixTag *m_pRwMatrix;
     bool m_bLinkedMatrix;
 };

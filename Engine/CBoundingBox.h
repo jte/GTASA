@@ -8,11 +8,13 @@ public:
     //
     const CVector& GetMin() const;
     const CVector& GetMax() const;
-    const CVector& GetOffset() const;
-    float GetRadius() const;
+	const CSphere& GetBoundingSphere() const;
+
+	void SetBoundingSphere(const CSphere& sphere);
+	void SetBoundingBox(const CBox& box);
 private:
     CVector m_min;
     CVector m_max;
-    CVector m_offset;
-    float m_radius;
+	CBox boundingBox;
+	CSphere boundingSphere;
 };

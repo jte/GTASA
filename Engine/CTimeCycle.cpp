@@ -193,3 +193,13 @@ float CTimeCycle::FindFarClipForCoors(CVector coors)
     m_ExtraColourInter = savedExtraColourInter;
     return v6.m_farClip;
 }
+
+CColourSet CTimeCycle::GetCurrentColours()
+{
+    return m_CurrentColours;
+}
+
+CVector CTimeCycle::GetCurrentVectorToSun()
+{
+    return m_VectorToSun[m_CurrentStoredValue];
+}

@@ -32,7 +32,7 @@ public:
 	static bool IsTrailerModel(int index);
 	static bool IsTrainModel(int index);
 	static uint32_t IsVehicleModelType(int index);
-	//* PrintModelInfoStoreUsage()
+	static void PrintModelInfoStoreUsage(); // NOT IN GTASA
 	//* ReInit2dEffects()
 	//* ShutDown()
 

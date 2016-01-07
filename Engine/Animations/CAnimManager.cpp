@@ -96,12 +96,12 @@ void CAnimManager::ReadANP23(RwStream* stream, bool anp3)
         }
         hier->SetName(anim.name);
         hier->SetSequences(anim.seq_count);
-        pHier->iAnimBlockID = (pAnimBlock - ms_aAnimBlocks) / sizeof(CAnimBlock);
-        pHier->bRunningCompressed = 0;
+        hier->m_animBlockId = (animBlock - ms_aAnimBlocks) / sizeof(CAnimBlock);
+        hier->bRunningCompressed = 0;
         bool bFirstSeq = true;
-        for(size_t j = 0; j < pHier->usNumSequences; j++)
+        for (size_t j = 0; j < hier->GetNumSequences(); j++)
         {
-            CAnimBlendSequence *pSequence = hier->pSequences[i];
+            CAnimBlendSequence *pSequence = hier->GetSequence(i);
             struct 
             {
                 char name[24];
@@ -115,7 +115,7 @@ void CAnimManager::ReadANP23(RwStream* stream, bool anp3)
             RwStreamRead(stream, &seq.bone_id, sizeof(seq.bone_id));
             pSequence->SetName(seq.name);
             pSequence->SetBoneTag(seq.bone_id);
-            if(bFirstSeq)
+            if (bFirstSeq)
             {
                 bFirstSeq = false;
                 hier->SetLoadCompressed(seq.type == 3 || seq.type == 4);
@@ -124,7 +124,7 @@ void CAnimManager::ReadANP23(RwStream* stream, bool anp3)
             bool bIsRoot;
             bool bIsCompressed;
             bool bInvalidType = false;
-            switch(seq.type)
+            switch (seq.type)
             {
                 case 1:
                     data_size = sizeof(SChildKeyFrame) * seq.frames_count;
@@ -452,18 +452,18 @@ AssocGroupId CAnimManager::GetFirstAssocGroup(char const *block_name);
 
 CAnimBlendHierarchy *CAnimManager::GetAnimation(unsigned int hash, CAnimBlock const *pAnimBlock)
 {
-    if(pAnimBlock->iNumAnimations == 0)
+    if(pAnimBlock->GetAnimationCount() == 0)
     {
         return 0;
     }
-    size_t id = pAnimBlock->iIDOffset;
+    size_t id = 0;
     CAnimBlendHierarchy *pAnimHier = NULL;
     do
     {
-        pAnimHier = ms_aAnimations[pAnimBlock->iIDOffset + id];
+        pAnimHier = &ms_aAnimations[pAnimBlock->GetIdOffset() + id];
         id++;
     } 
-    while(id < pAnimBlock->iNumAnimations && pAnimHier->iHashKey != hash);
+    while(id < pAnimBlock->GetAnimationCount() && pAnimHier->GetHashKey() != hash);
     return pAnimHier;
 }
 
@@ -477,44 +477,44 @@ CAnimManager::AnimAssocDefinition *CAnimManager::AddAnimAssocDefinition(char con
     }
     // Fill out assoc definition
     ms_numAnimAssocDefinitions = i;
-    AnimAssocDefinition *pDef = ms_aAnimAssocDefinitions[ms_numAnimAssocDefinitions];
+    AnimAssocDefinition *pDef = &ms_aAnimAssocDefinitions[ms_numAnimAssocDefinitions];
     strncpy(pDef->szGroupName, group, sizeof(pDef->szGroupName));
     strncpy(pDef->szIfpFile, file, sizeof(pDef->szIfpFile));
     pDef->iGroupAnimType = type;
     pDef->iNumAnims = count;
-    pDef->pDescriptor = descriptor;
+    pDef->pDescriptor = *descriptor;
     pDef->pszAnimations = new char[pDef->iNumAnims];
     // CHECK: Do we need to mark next slot as free?
 }
 
 AnimAssocDefinition *CAnimManager::GetAnimGroupName(AssocGroupId index)
 {
-    return ms_aAnimAssocDefinitions[index]->szGroupName;
+    return ms_aAnimAssocDefinitions[index].szGroupName;
 }
 
 const char *CAnimManager::GetAnimBlockName(AssocGroupId index)
 {
-    return ms_aAnimAssocDefinitions[index]->szBlockName;
+    return ms_aAnimAssocDefinitions[index].szBlockName;
 }
 
 CAnimBlendAssociation *CAnimManager::GetAnimAssociation(AssocGroupId group, AnimationId anim)
 {
-    return ms_aAnimAssocGroups[group]->GetAnimation(anim);
+    return ms_aAnimAssocGroups[group].GetAnimation(anim);
 }
 
 CAnimBlendAssociation *CAnimManager::GetAnimAssociation(AssocGroupId group, char const *name)
 {
-    return ms_aAnimAssocGroups[group]->GetAnimation(name);
+    return ms_aAnimAssocGroups[group].GetAnimation(name);
 }
 
 void CAnimManager::AddAnimToAssocDefinition(CAnimManager::AnimAssocDefinition *pDef, char const *name)
 {
-    char *pAnims[24] = pDef->pszAnimations;
+    char **pAnims = pDef->pszAnimations;
     while(*pAnims[0] != '\0')
     {
         pAnims++;
     }
-    strcpy(*pAnims, name, 24);
+    strncpy(*pAnims, name, 24);
 }
 
 int32_t CAnimManager::RegisterAnimBlock(char const *block_name)
@@ -522,10 +522,10 @@ int32_t CAnimManager::RegisterAnimBlock(char const *block_name)
     CAnimBlock *pAnimBlock = GetAnimationBlock(block_name);
     if(pAnimBlock == NULL)
     {
-        pAnimBlock = ms_aAnimBlocks[ms_numAnimBlocks];
-        pAnimBlock->szName = block_name;
-        pAnimBlock->iNumAnimations = 0;
-        pAnimBlock->pFirstAssocGroup = GetFirstAssocGroup(pAnimBlock->szName);
+        pAnimBlock = &ms_aAnimBlocks[ms_numAnimBlocks];
+        pAnimBlock->SetName(block_name);
+        pAnimBlock->SetAnimationCount(0);
+        pAnimBlock->SetFirstAssocGroup(GetFirstAssocGroup(pAnimBlock->GetName()));
         ms_numAnimBlocks++;
     }
     return (pAnimBlock - ms_aAnimBlocks) / sizeof(pAnimBlock);
@@ -533,7 +533,7 @@ int32_t CAnimManager::RegisterAnimBlock(char const *block_name)
 
 void CAnimManager::RemoveAnimBlock(int index)
 {
-    CAnimBlock *pAnimBlock = ms_aAnimBlocks[index];
+    CAnimBlock *pAnimBlock = &ms_aAnimBlocks[index];
     for(size_t i = 0; i < ms_numAnimAssocDefinitions; i++)
     {
         if(ms_aAnimAssocGroups[i]->pAnimBlock == pAnimBlock)
@@ -541,12 +541,12 @@ void CAnimManager::RemoveAnimBlock(int index)
             ms_aAnimAssocGroups[i]->DestroyAssociations();
         }
     }
-    for(size_t i = 0; i < pAnimBlock->iNumAnimations; i++)
+    for(size_t i = 0; i < pAnimBlock->GetAnimationCount(); i++)
     {
         ms_aAnimations[i + pAnimBlock->iIDOffset]->Shutdown();
     }
-    pAnimBlock->bLoaded = false;
-    pAnimBlock->usRefs = 0;
+    pAnimBlock->SetLoaded(false);
+    pAnimBlock->SetReferenceCount(0);
 }
 
 void CAnimManager::AddAnimBlockRef(int index)

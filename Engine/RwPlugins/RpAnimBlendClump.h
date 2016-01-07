@@ -3,6 +3,7 @@
 enum CLUMP_ANIM_ASSOC_FLAGS
 {
     ANIMATION_STARTED = 0x01,
+    ROOT_FRAME = 0x08,
     IS_PARTIAL_ASSOC = 0x10
 };
 
@@ -36,6 +37,7 @@ CAnimBlendAssociation* RpAnimBlendClumpGetMainPartialAssociation_N(RpClump *clum
 size_t RpAnimBlendClumpGetNumAssociations(RpClump *pClump);
 size_t RpAnimBlendClumpGetNumNonPartialAssociations(RpClump *pClump);
 size_t RpAnimBlendClumpGetNumPartialAssociations(RpClump *pClump);
+void RpAnimBlendClumpGiveAssociations(RpClump *clump);
 /*	* RpAnimBlendClumpGiveAssociations(RpClump*, CAnimBlendAssociation*)
 	* RpAnimBlendClumpPauseAllAnimations(RpClump*)
 	* RpAnimBlendClumpRemoveAllAssociations(RpClump*)

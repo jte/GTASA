@@ -57,7 +57,7 @@ uint32_t CKeyGen::GetKey(char const *szString, int uiLength)
     uint32_t key = -1;
     for(size_t i = 0; i < uiLength; i++)
     {
-        key = CKeyGen::keyTable[key ^ szString[i]] ^ (key >> 8);
+        key = CKeyGen::keyTable[(key ^ szString[i]) % 256] ^ (key >> 8);
     }
     return key;
 }
@@ -68,7 +68,7 @@ uint32_t CKeyGen::GetUppercaseKey(char const *szString)
     size_t uiLength = strlen(szString);
     for(size_t i = 0; i < uiLength; i++)
     {
-        key = CKeyGen::keyTable[key ^ toupper(szString[i])] ^ (key >> 8);
+        key = CKeyGen::keyTable[(key ^ toupper(szString[i])) % 256] ^ (key >> 8);
     }
     return key;
 }
@@ -78,7 +78,7 @@ uint32_t CKeyGen::AppendStringToKey(unsigned int uiKey, char const *szString)
     size_t uiLength = strlen(szString);
     for(size_t i = 0; i < uiLength; i++)
     {
-        uiKey = CKeyGen::keyTable[uiKey ^ szString[i]] ^ (uiKey >> 8);
+        uiKey = CKeyGen::keyTable[(uiKey ^ szString[i]) % 256] ^ (uiKey >> 8);
     }
     return uiKey;
 }

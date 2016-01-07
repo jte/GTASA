@@ -2,28 +2,64 @@
 
 #define rwID_BLEND_CLUMP (0xFB)
 
-#define PLUGIN_ANIM_BLEND_CLUMP(clump, var) \
-    (RWPLUGINOFFSET(RpAnimBlendPluginDef, clump, gBlendClumpPlugin)->var)
+#define PLUGIN_ANIM_BLEND_CLUMP(clump) \
+    (RWPLUGINOFFSET(CAnimBlendClumpData, clump, gBlendClumpPlugin))
 
 static RwInt32 gBlendClumpPlugin = -1;
 
-struct RpAnimBlendPluginDef
-{
-    CAnimBlendClumpData* animBlendClumpData;
-};
 
 CAnimBlendClumpData* GetAnimBlendClumpData(RpClump* clump)
 {
-    return PLUGIN_ANIM_BLEND_CLUMP(clump, animBlendClumpData);
+    return PLUGIN_ANIM_BLEND_CLUMP(clump);
+}
+
+CAnimBlendAssociation* ClumpAssocToBlendAssoc(SClumpAnimAssoc* assoc)
+{
+    return (CAnimBlendAssociation*)(((char*)assoc) - 4);
+}
+
+static void RpAnimBlendClumpInitAtomicCB(AnimBlendFrameData* frameData, void*)
+{
+    frameData->flags = 0;
+    frameData->pos = frameData->frame->modelling.pos;
+    frameData->bone_tag = -1;
+}
+
+static RwFrame* RpAnimBlendClumpGetAtomicBoneCountCB(RwFrame* frame, void* data)
+{
+    size_t* numBones = (size_t*)data;
+    (*numBones)++;
+    RwFrameForAllChildren(frame, RpAnimBlendClumpGetAtomicBoneCountCB, data);
+    return frame;
+}
+
+static RwFrame* RpAnimBlendClumpSetAtomicFrameDataCB(RwFrame* frame, void* data)
+{
+    AnimBlendFrameData** frames = (AnimBlendFrameData**)data;
+    (*frames)->frame = frame;
+    (*frames)++;
+    RwFrameForAllChildren(frame, RpAnimBlendClumpSetAtomicFrameDataCB, data);
+    return frame;
+}
+
+static void RpAnimBlendClumpInitAtomic(RpClump* clump)
+{
+    RpAnimBlendAllocateData(clump);
+    size_t numBones = 0;
+    RwFrameForAllChildren(RwFrameGetParent(clump), RpAnimBlendClumpGetAtomicBoneCountCB, &numBones);
+    CAnimBlendClumpData* clumpData = GetAnimBlendClumpData(clump);
+    clumpData->SetNumberOfBones(numBones);
+    RwFrameForAllChildren(RwFrameGetParent(clump), RpAnimBlendClumpSetAtomicFrameDataCB, clumpData->GetFrames());
+    clumpData->ForAllFrames(RpAnimBlendClumpInitAtomicCB, NULL);
+    clumpData->GetFrame(0)->flags |= ROOT_FRAME;
 }
 
 static void RpAnimBlendClumpInitClump(RpClump* clump);
-static void RpAnimBlendClumpInitAtomic(RpClump* clump);
 
 void RpAnimBlendClumpInit(RpClump* clump)
 {
     RpAtomic* atomic = GetFirstAtomic(clump);
-    if(atomic && RpSkinGeometryGetSkin(atomic->geometry))
+    if (atomic && RpSkinGeometryGetSkin(atomic->geometry))
     {
         RpAnimBlendClumpInitClump(clump);
     }
@@ -39,28 +75,27 @@ static void RpAnimBlendClumpInitFrameCB(AnimBlendFrameData* frameData, void*)
     frameData->flags = 0;
 }
 
-void RpAnimBlendClumpInitClump(RpClump *clump)
+void RpAnimBlendClumpInitClump(RpClump* clump)
 {
-    RpAtomic *atomic = GetFirstAtomic(clump);
-    RpSkin *skin = RpSkinGeometryGetSkin(atomic->geometry);
+    RpAtomic* atomic = GetFirstAtomic(clump);
+    RpSkin* skin = RpSkinGeometryGetSkin(atomic->geometry);
     uint32_t boneCount = RpSkinGetNumBones(skin);
-    CAnimBlendClumpData *animBlendClumpData = GetAnimBlendClumpData(clump);
-
+    CAnimBlendClumpData* animBlendClumpData = GetAnimBlendClumpData(clump);
     animBlendClumpData->SetNumberOfBones(boneCount);
-    RpHAnimHierarchy *animHierarchy = GetAnimHierarchyFromSkinClump(clump);
+    RpHAnimHierarchy* animHierarchy = GetAnimHierarchyFromSkinClump(clump);
     RwV3d boneTable[63];
     SkinGetBonePositionsToTable(clump, boneTable);
     for(size_t i = 0; i < boneCount; i++)
     {
         AnimBlendFrameData *pFrame = animBlendClumpData->GetFrame(i);
-        //pFrame->pad2 = pAnimHierarchy->currentAnim + pAnimHierarchy->currentAnim->currentInterpKeyFrameSize * i + 0x4C; TODO
+        pFrame->frame = (RwFrame*)rtANIMGETINTERPFRAME(animHierarchy->currentAnim, i);
         pFrame->node = &animHierarchy->pNodeInfo[i];
         pFrame->pos = boneTable[i];
     }
     // Initialize frames
     animBlendClumpData->ForAllFrames(RpAnimBlendClumpInitFrameCB, NULL);
     // Mark root frame
-    animBlendClumpData->GetFrame(0)->flags |= 8;
+    animBlendClumpData->GetFrame(0)->flags |= ROOT_FRAME;
 }
 
 bool RpAnimBlendClumpIsInitialized(RpClump* clump)
@@ -75,12 +110,12 @@ void RpAnimBlendClumpAddAssociation(RpClump* clump, CAnimBlendAssociation* assoc
     SClumpAnimAssoc* animClumpAssoc = data->GetClumpAnimAssoc();
     if(animClumpAssoc)
     {
-        animClumpAssoc->userPtr = &assoc->GetClumpAnimAssoc();
+        animClumpAssoc->userPtr = (void*)&assoc->GetClumpAnimAssoc();
     }
     SClumpAnimAssoc& blendAssoc = assoc->GetClumpAnimAssoc();
     blendAssoc.userPtr = data;
     blendAssoc.next = data->GetClumpAnimAssoc();
-    data->pFirstAnimAssoc = &assoc->GetClumpAnimAssoc();
+    data->SetClumpAnimAssoc(&assoc->GetClumpAnimAssoc());
     assoc->Start(startTime);
     blendAssoc.flags |= flags;
     blendAssoc.blendAmount = blendAmount;
@@ -103,91 +138,109 @@ void RpAnimBlendClumpSetBlendDeltas(RpClump* clump, uint16_t flags, float blendD
 
 void RpAnimBlendClumpRemoveAssociations(RpClump *pClump, uint16_t usFlags)
 {
-    CAnimBlendClumpData *pAnimData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    SClumpAnimAssoc *pAssoc = pAnimData->pFirstAnimAssoc;
-    while(pAssoc)
+    CAnimBlendClumpData *pAnimData = GetAnimBlendClumpData(pClump);
+    SClumpAnimAssoc *pAssoc = pAnimData->GetClumpAnimAssoc();
+    while (pAssoc)
     {
-        CAnimBlendAssociation *pAnimAssoc = pAssoc[-1];
-        if(!usFlags || (pAnimAssoc->ClumpAnimAssoc.usFlags & usFlags))
+        CAnimBlendAssociation *pAnimAssoc = ClumpAssocToBlendAssoc(pAssoc);
+        if (!usFlags || (pAnimAssoc->GetClumpAnimAssoc().flags & usFlags))
         {
             delete pAnimAssoc;
         }
-        pAssoc = pAssoc->pNext;
+        pAssoc = pAssoc->next;
     }
 }
 
-CAnimBlendAssociation* RpAnimBlendClumpGetAssociation(RpClump*pClump, const char *szName)
+CAnimBlendAssociation* RpAnimBlendClumpGetAssociation(RpClump *clump, const char *name)
 {
-    CAnimBlendClumpData *pAnimData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    SClumpAnimAssoc *pAssoc = pAnimData->pFirstAnimAssoc;
-    size_t uiNameHash = CKeyGen::GetUppercaseKey(szName);
-    if(pAssoc == NULL)
+    CAnimBlendClumpData *anim_data = GetAnimBlendClumpData(clump);
+    SClumpAnimAssoc *assoc = anim_data->GetClumpAnimAssoc();
+    size_t hash = CKeyGen::GetUppercaseKey(name);
+    if (assoc == NULL)
     {   
         return NULL;
     }
-    while(pAssoc && pAssoc->pAnimHierarchy->iHashKey != uiNameHash)
+    while (assoc && assoc->animHierarchy->GetHashKey() != hash)
     {
-        pAssoc = pAssoc->pNext;
+        assoc = assoc->next;
     }
-    return pAssoc[-1];
+    return ClumpAssocToBlendAssoc(assoc);
 }
 
-CAnimBlendAssociation *RpAnimBlendClumpGetAssociation(RpClump *pClump, AnimationId usAnimId)
+CAnimBlendAssociation *RpAnimBlendClumpGetAssociation(RpClump *clump, AnimationId anim_id)
 {
-    CAnimBlendClumpData *pAnimData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    SClumpAnimAssoc *pAssoc = pAnimData->pFirstAnimAssoc;
-    if(pAssoc == NULL)
+    CAnimBlendClumpData *anim_data = GetAnimBlendClumpData(clump);
+    SClumpAnimAssoc *assoc = anim_data->GetClumpAnimAssoc();
+    if (assoc == NULL)
     {
         return NULL;
     }
-    while(pAssoc && pAssoc->usAnimId != usAnimId)
+    while (assoc && assoc->animId != anim_id)
     {
-        pAssoc = pAssoc->pNext;
+        assoc = assoc->next;
     }
-    return pAssoc[-1];
+    return ClumpAssocToBlendAssoc(assoc);
 }
 
-CAnimBlendAssociation *RpAnimBlendClumpGetAssociation(RpClump *pClump, bool, CAnimBlendHierarchy *pAnimHierarchy)
+CAnimBlendAssociation *RpAnimBlendClumpGetAssociation(RpClump *clump, bool, CAnimBlendHierarchy *anim_hier)
 {
-    CAnimBlendClumpData *pAnimData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    SClumpAnimAssoc *pAssoc = pAnimData->pFirstAnimAssoc;
-    if(pAssoc == NULL)
+    CAnimBlendClumpData *anim_data = GetAnimBlendClumpData(clump);
+    SClumpAnimAssoc *assoc = anim_data->GetClumpAnimAssoc();
+    if (assoc == NULL)
     {
         return NULL;
     }
-    while(pAssoc && pAssoc->pAnimHierarchy != pAnimHierarchy)
+    while (assoc && assoc->animHierarchy != anim_hier)
     {
-        pAssoc = pAssoc->pNext;
+        assoc = assoc->next;
     }
-    return pAssoc[-1];
+    return ClumpAssocToBlendAssoc(assoc);
 }
 
-static void* RpAnimBlendPluginConstructor(void* clump, RwInt32 offset, RwInt32 size)
+static void *RpAnimBlendPluginConstructor(void *clump, RwInt32 offset, RwInt32 size)
 {
-    PLUGIN_ANIM_BLEND_CLUMP(clump, animBlendClumpData) = NULL;
+    PLUGIN_ANIM_BLEND_CLUMP(clump, data) = NULL;
     return clump;
 }
 
-static void* RpAnimBlendPluginDestructor(void* clump, RwInt32 offset, RwInt32 size)
+static void *RpAnimBlendPluginDestructor(void *clump, RwInt32 offset, RwInt32 size)
 {
-    CAnimBlendClumpData* data = GetAnimBlendClumpData(static_cast<RpClump*>(clump));
-    if(data)
+    CAnimBlendClumpData *data = GetAnimBlendClumpData(static_cast<RpClump*>(clump));
+    if (data)
     {
-        RpAnimBlendClumpGiveAssociations(static_cast<RpClump*>(clump), NULL);
+        RpAnimBlendClumpGiveAssociations(static_cast<RpClump*>(clump));
         delete data;
         data = NULL;
     }
     return clump;
 }
 
-static void* RpAnimBlendPluginCopyConstructor(void*, const void*, RwInt32, RwInt32)
+void RpAnimBlendClumpGiveAssociations(RpClump *clump)
+{
+    CAnimBlendClumpData *data = GetAnimBlendClumpData(clump);
+    SClumpAnimAssoc *assoc = data->GetClumpAnimAssoc();
+    if (assoc)
+    {
+        do
+        {
+            if (assoc != (SClumpAnimAssoc*)4)
+            {
+                CAnimBlendAssociation *blend_assoc = ClumpAssocToBlendAssoc(assoc);
+                blend_assoc->~CAnimBlendAssociation(); /* do we need delete here?*/
+            }
+            assoc = assoc->next;
+        } while (assoc);
+    }
+}
+
+static void *RpAnimBlendPluginCopyConstructor(void*, const void*, RwInt32, RwInt32)
 {
     return NULL;
 }
 
 RwBool RpAnimBlendPluginAttach()
 {
-    gBlendClumpPlugin = RpClumpRegisterPlugin(sizeof(RpAnimBlendPluginDef), 
+    gBlendClumpPlugin = RpClumpRegisterPlugin(sizeof(CAnimBlendClumpData*), 
                                               MAKECHUNKID(rwVENDORID_ROCKSTAR, rwID_BLEND_CLUMP),
                                               RpAnimBlendPluginConstructor,
                                               RpAnimBlendPluginDestructor,
@@ -212,83 +265,84 @@ RwBool RpAnimBlendPluginAttach()
     return true;
 }
 
-CAnimBlendClumpData* RpAnimBlendAllocateData(RpClump* clump)
+CAnimBlendClumpData* RpAnimBlendAllocateData(RpClump *clump)
 {
-    PLUGIN_ANIM_BLEND_CLUMP(clump, animBlendClumpData) = new CAnimBlendClumpData;
+    PLUGIN_ANIM_BLEND_CLUMP(clump, data) = new CAnimBlendClumpData;
     return GetAnimBlendClumpData(clump);
 }
 
-CAnimBlendAssociation* RpAnimBlendClumpExtractAssociations(RpClump *pClump)
+CAnimBlendAssociation* RpAnimBlendClumpExtractAssociations(RpClump *clump)
 {
-    CAnimBlendClumpData *pData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    CAnimBlendAssociation *pAssoc = pData->pFirstAnimAssoc[-1];
-    pData->pFirstAnimAssoc->pUserPtr = NULL;
-    pData->pFirstAnimAssoc = NULL;
-    return pAssoc;
+    CAnimBlendClumpData *data = GetAnimBlendClumpData(clump);
+    SClumpAnimAssoc *clump_assoc = data->GetClumpAnimAssoc();
+    CAnimBlendAssociation *assoc = ClumpAssocToBlendAssoc(clump_assoc);
+    clump_assoc->userPtr = NULL;
+    data->SetClumpAnimAssoc(NULL);
+    return assoc;
 }
 
 typedef void (*AnimBlendFrameDataCallback)(AnimBlendFrameData*, void*);
 
-static void RpAnimBlendClumpFillFrameCB(AnimBlendFrameData *pFrameData, void *pData)
+static void RpAnimBlendClumpFillFrameCB(AnimBlendFrameData *frame_data, void *data)
 {
-    AnimBlendFrameData **ppFrames = (AnimBlendFrameData**)pData;
-    ppFrames[CVisibilityPlugins::GetFrameHierarchyId(pFrameData->pFrame)] = pFrameData;
+    AnimBlendFrameData **ppFrames = (AnimBlendFrameData**)data;
+    ppFrames[CVisibilityPlugins::GetFrameHierarchyId(frame_data->frame)] = frame_data;
 }
 
-static void RpAnimBlendClumpFillClump(RpClump *pClump, AnimBlendFrameData **ppFrames)
+static void RpAnimBlendClumpFillClump(RpClump *clump, AnimBlendFrameData **frames)
 {
-    CAnimBlendClumpData *pFrameData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    RpHAnimHierarchy *pHAnimHier = GetAnimHierarchyFromSkinClump(pClump);
-    for(size_t i = 1; i < 19 /*or 20*/; i++)
+    CAnimBlendClumpData *frame_data = GetAnimBlendClumpData(clump);
+    RpHAnimHierarchy *hanim_hier = GetAnimHierarchyFromSkinClump(clump);
+    for(size_t i = 1; i < 19; i++)
     {
-        size_t boneTag = ConvertPedNode2BoneTag(i);
-        ppFrames[i] = pFrameData->GetFrame(RpHAnimIDGetIndex(pHAnimHier, boneTag));
+        size_t bone_tag = ConvertPedNode2BoneTag(i);
+        frames[i] = frame_data->GetFrame(RpHAnimIDGetIndex(hanim_hier, bone_tag));
     }
 }
 
-void RpAnimBlendClumpFillFrameArray(RpClump *pClump, AnimBlendFrameData **ppFrames)
+void RpAnimBlendClumpFillFrameArray(RpClump *clump, AnimBlendFrameData **frames)
 {
-    CAnimBlendClumpData *pData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    RpAtomic *pFirst = GetFirstAtomic(pClump);
-    if(pFirst && RpSkinGeometryGetSkin(pFirst->geometry))
+    CAnimBlendClumpData *data = GetAnimBlendClumpData(clump);
+    RpAtomic *first = GetFirstAtomic(clump);
+    if(first && RpSkinGeometryGetSkin(first->geometry))
     {
-        RpAnimBlendClumpFillClump(pClump, ppFrames);
+        RpAnimBlendClumpFillClump(clump, frames);
     }
     else
     {
-        pData->ForAllFrames(RpAnimBlendClumpFillFrameCB, ppFrames);
+        data->ForAllFrames(RpAnimBlendClumpFillFrameCB, frames);
     }
 }
 
 static AnimBlendFrameData* RpAnimBlendClumpFrame;
 
-void RpAnimBlendClumpFindBoneCB(AnimBlendFrameData *pFrameData, void *pData)
+void RpAnimBlendClumpFindBoneCB(AnimBlendFrameData *frame_data, void *data)
 {
-    int node_id = *(int*)pData;
-    if(pFrameData->node_id == node_id)
+    int node_id = *(int*)data;
+    if(frame_data->node->nodeID == node_id)
     {
-        RpAnimBlendClumpFrame = pFrameData;
+        RpAnimBlendClumpFrame = frame_data;
     }
 }
 
-AnimBlendFrameData *RpAnimBlendClumpFindBone(RpClump *pClump, unsigned int node_id)
+AnimBlendFrameData *RpAnimBlendClumpFindBone(RpClump *clump, unsigned int node_id)
 {
-    CAnimBlendClumpData *pData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
+    CAnimBlendClumpData *data = GetAnimBlendClumpData(clump);
 
-    RpAnimBlendClumpFrame = 0;
-    pData->ForAllFrames(RpAnimBlendClumpFindBoneCB, &node_id);
+    RpAnimBlendClumpFrame = NULL;
+    data->ForAllFrames(RpAnimBlendClumpFindBoneCB, &node_id);
     return RpAnimBlendClumpFrame;
 }
 
-static void RpAnimBlendClumpFindClumpFrameCB(AnimBlendFrameData *pFrameData, void *pData)
+static void RpAnimBlendClumpFindClumpFrameCB(AnimBlendFrameData *frame_data, void *data)
 {
-    const char *name = (const char*)pData;
-    const char *frame_node_name = ConvertBoneTag2BoneName(pFrameData->bone_tag);
-    if(frame_node_name)
+    const char *name = (const char*)data;
+    const char *frame_node_name = ConvertBoneTag2BoneName(frame_data->bone_tag);
+    if (frame_node_name)
     {
-        if(!stricmp(name, frame_node_name))
+        if (!stricmp(name, frame_node_name))
         {
-            RpAnimBlendClumpFrame = pFrameData;
+            RpAnimBlendClumpFrame = frame_data;
         }
     }
 }
@@ -296,26 +350,26 @@ static void RpAnimBlendClumpFindClumpFrameCB(AnimBlendFrameData *pFrameData, voi
 static void RpAnimBlendClumpFindAtomicFrameCB(AnimBlendFrameData *frame_data, void *data)
 {
     const char *name = (const char*)data;
-    const char *node_name = GetFrameNodeName(frame_data->pFrame);
-    if(!stricmp(name, node_name))
+    const char *node_name = GetFrameNodeName(frame_data->frame);
+    if (!stricmp(name, node_name))
     {
         RpAnimBlendClumpFrame = frame_data;
     }
 }
 
-AnimBlendFrameData* RpAnimBlendClumpFindFrame(RpClump *pClump, char const *name)
+AnimBlendFrameData* RpAnimBlendClumpFindFrame(RpClump *clump, char const *name)
 {
-    CAnimBlendClumpData *pFrameData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    RpAtomic *pFirst = GetFirstAtomic(pClump);
+    CAnimBlendClumpData *frame_data = GetAnimBlendClumpData(clump);
+    RpAtomic *first = GetFirstAtomic(clump);
 
     RpAnimBlendClumpFrame = 0;
-    if(pFirst && RpSkinGeometryGetSkin(pFirst->geometry))
+    if(first && RpSkinGeometryGetSkin(first->geometry))
     {
-        pFrameData->ForAllFrames(RpAnimBlendClumpFindClumpFrameCB, (void*)name);
+        frame_data->ForAllFrames(RpAnimBlendClumpFindClumpFrameCB, (void*)name);
     }
     else
     {
-        pFrameData->ForAllFrames(RpAnimBlendClumpFindAtomicFrameCB, (void*)name);
+        frame_data->ForAllFrames(RpAnimBlendClumpFindAtomicFrameCB, (void*)name);
     }
     return RpAnimBlendClumpFrame;
 }
@@ -324,10 +378,10 @@ static void RpAnimBlendClumpFindClumpByHashCB(AnimBlendFrameData *frame_data, vo
 {
     uint32_t hash = *(uint32_t*)data;
     const char *bone_name = ConvertBoneTag2BoneName(frame_data->bone_tag);
-    if(bone_name)
+    if (bone_name)
     {
         uint32_t bone_hash = CKeyGen::GetUppercaseKey(bone_name);
-        if(bone_hash == hash)
+        if (bone_hash == hash)
         {
             RpAnimBlendClumpFrame = frame_data;
         }
@@ -336,195 +390,186 @@ static void RpAnimBlendClumpFindClumpByHashCB(AnimBlendFrameData *frame_data, vo
 
 static void RpAnimBlendClumpFindAtomicByHashCB(AnimBlendFrameData *frame_data, void *data)
 {
-    const char *node_name = GetFrameNodeName(frame_data->pFrame);
+    const char *node_name = GetFrameNodeName(frame_data->frame);
     uint32_t hash = *(uint32_t*)data;
     uint32_t node_hash = CKeyGen::GetUppercaseKey(node_name);
-    if(hash == node_hash)
+    if (hash == node_hash)
     {
         RpAnimBlendClumpFrame = frame_data;
     }
 }
 
-AnimBlendFrameData* RpAnimBlendClumpFindFrameFromHashKey(RpClump *pClump, unsigned int hash)
+AnimBlendFrameData* RpAnimBlendClumpFindFrameFromHashKey(RpClump *clump, unsigned int hash)
 {
-    CAnimBlendClumpData *pFrameData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    RpAtomic *pFirst = GetFirstAtomic(pClump);
+    CAnimBlendClumpData *frame_data = GetAnimBlendClumpData(clump);
+    RpAtomic *first = GetFirstAtomic(clump);
 
     RpAnimBlendClumpFrame = 0;
-    if(pFirst && RpSkinGeometryGetSkin(pFirst->geometry))
+    if (first && RpSkinGeometryGetSkin(first->geometry))
     {
-        pFrameData->ForAllFrames(RpAnimBlendClumpFindClumpByHashCB, &hash);
+        frame_data->ForAllFrames(RpAnimBlendClumpFindClumpByHashCB, &hash);
     }
     else
     {
-        pFrameData->ForAllFrames(RpAnimBlendClumpFindAtomicByHashCB, &hash);
+        frame_data->ForAllFrames(RpAnimBlendClumpFindAtomicByHashCB, &hash);
     }
     return RpAnimBlendClumpFrame;
 }
 
-CAnimBlendAssociation* RpAnimBlendClumpGetFirstAssociation(RpClump *pClump)
+CAnimBlendAssociation* RpAnimBlendClumpGetFirstAssociation(RpClump *clump)
 {
-    CAnimBlendClumpData *pFrameData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
+    CAnimBlendClumpData *frame_data = GetAnimBlendClumpData(clump);
 
-    if(RpAnimBlendClumpIsInitialized(pClump) && pFrameData->pFirstAnimAssoc)
+    if (RpAnimBlendClumpIsInitialized(clump) && frame_data->GetClumpAnimAssoc())
     {
-        return pFrameData->pFirstAnimAssoc[-1];
+        return ClumpAssocToBlendAssoc(frame_data->GetClumpAnimAssoc());
     }
     return NULL;
 }
 
-CAnimBlendAssociation* RpAnimBlendClumpGetFirstAssociation(RpClump *pClump, unsigned int flags)
+CAnimBlendAssociation* RpAnimBlendClumpGetFirstAssociation(RpClump *clump, unsigned int flags)
 {
-    CAnimBlendClumpData *pFrameData = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData);
-    if(!pFrameData)
+    CAnimBlendClumpData *frame_data = GetAnimBlendClumpData(clump);
+    if (!frame_data)
     {
         return NULL;
     }
-    SClumpAnimAssoc *pAssoc = pFrameData->pFirstAnimAssoc;
+    SClumpAnimAssoc *assoc = frame_data->GetClumpAnimAssoc();
     do
     {
-        if(pAssoc->usFlags & flags)
+        if(assoc->flags & flags)
         {
-            return pAssoc[-1];
+            return ClumpAssocToBlendAssoc(assoc);
         }
-        pAssoc = pAssoc->pNext;
-    } while(pAssoc);
+        assoc = assoc->next;
+    } while (assoc);
     return NULL;
 }
 
-CAnimBlendAssociation* RpAnimBlendClumpGetMainAssociation(RpClump *pClump, CAnimBlendAssociation **pAssocs, float *fBlend)
+CAnimBlendAssociation* RpAnimBlendClumpGetMainAssociation(RpClump *clump, CAnimBlendAssociation **assocs, float *blend)
 {
-    float fMinBlend;
-    float fMaxBlend = 0.0;
-    CAnimBlendAssociation *pBlendAssoc;
-    SClumpAnimAssoc *pAssoc = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData)->pFirstAnimAssoc;
+    float min_blend = 0.0f; // cheeck init values
+    float max_blend = 0.0f;
+    CAnimBlendAssociation *blend_assoc;
+    SClumpAnimAssoc *clump_assoc = GetAnimBlendClumpData(clump)->GetClumpAnimAssoc();
     do 
     {
-        if(!(pAssoc->usFlags & 0x10))
+        if (!(clump_assoc->flags & 0x10))
         {
-            if(pAssoc->fBlendAmount <= fMinBlend)
+            if (clump_assoc->blendAmount <= min_blend)
             {
-                if(fMaxBlend < pAssoc->fBlendAmount)
+                if (clump_assoc->blendAmount > max_blend)
                 {
-                    pBlendAssoc = pAssoc[-1];
-                    fMaxBlend = pAssoc->fBlendAmount;
+                    blend_assoc = ClumpAssocToBlendAssoc(clump_assoc);
+                    max_blend = clump_assoc->blendAmount;
                 }
             }
             else
             {
-                fMaxBlend = fMinBlend;
-                fMinBlend = pAssoc->fBlendAmount;
-                pBlendAssoc = pAssoc[-1];
+                max_blend = min_blend;
+                min_blend = clump_assoc->blendAmount;
+                blend_assoc = ClumpAssocToBlendAssoc(clump_assoc);
             }
         }
-        pAssoc = pAssoc->pNext;
-    } while(pAssoc);
-    if(pAssocs)
+        clump_assoc = clump_assoc->next;
+    } while (clump_assoc);
+    if (assocs)
     {
-        pAssocs = &pBlendAssoc;
+        assocs = &blend_assoc;
     }
-    if(fBlend)
+    if (blend)
     {
-        *fBlend = fMaxBlend;
+        *blend = max_blend;
     }
-    return pBlendAssoc;
-}
-
-CAnimBlendAssociation* RpAnimBlendClumpGetMainAssociation_N(RpClump *pClump, int n)
-{
-    SClumpAnimAssoc *pAssoc = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData)->pFirstAnimAssoc;
-    if(!pAssoc)
-    {
-        return NULL;
-    }
-    int i = 0;
-    do 
-    {
-        if((pAssoc->usFlags & 0x10) && i == n)
-        {
-            return pAssoc[-1];
-        }
-        i++;
-        pAssoc = pAssoc->pNext;
-    } while(pAssoc);
-    return NULL;
-}
-
-CAnimBlendAssociation* RpAnimBlendClumpGetMainPartialAssociation(RpClump *clump)
-{
-    SClumpAnimAssoc *assoc = PLUGIN_BLEND_CLUMP(clump, pBlendClumpData)->pFirstAnimAssoc;
-    CAnimBlendAssociation *blend_assoc = NULL;
-    float min_blend = 0.0f;
-    
-    do 
-    {
-        if((assoc->usFlags & 0x10) && min_blend < assoc->fBlendAmount)
-        {
-            blend_assoc = pAssoc[-1];
-            min_blend = assoc->fBlendAmount;
-        }
-        assoc = assoc->pNext;
-    } while(assoc);
     return blend_assoc;
 }
 
-CAnimBlendAssociation* RpAnimBlendClumpGetMainPartialAssociation_N(RpClump *clump, int n)
+CAnimBlendAssociation *RpAnimBlendClumpGetMainAssociation_N(RpClump *clump, int n)
 {
-    SClumpAnimAssoc *assoc = PLUGIN_BLEND_CLUMP(clump, pBlendClumpData)->pFirstAnimAssoc;
-    if(!assoc)
+    SClumpAnimAssoc *assoc = GetAnimBlendClumpData(clump)->GetClumpAnimAssoc();
+    if (!assoc)
     {
         return NULL;
     }
-    int i = 0;
-    do
+    for (size_t i = 0; assoc; assoc = assoc->next, i++)
     {
-        if(!(assoc->usFlags & 0x10) && i == n)
+        if ((assoc->flags & 0x10) && i == n)
         {
-            return assoc[-1];
+            return ClumpAssocToBlendAssoc(assoc);
         }
-        assoc = assoc->pNext;
-    } while(assoc);
+    }
     return NULL;
 }
 
-size_t RpAnimBlendClumpGetNumAssociations(RpClump *pClump)
+CAnimBlendAssociation *RpAnimBlendClumpGetMainPartialAssociation(RpClump *clump)
 {
-    SClumpAnimAssoc *assoc = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData)->pFirstAnimAssoc;
-    size_t count = 0;
-    do
+    SClumpAnimAssoc *assoc = GetAnimBlendClumpData(clump)->GetClumpAnimAssoc();
+    CAnimBlendAssociation *blend_assoc = NULL;
+    float min_blend = 0.0f;
+    
+    for (; assoc; assoc = assoc->next)
+    {
+        if ((assoc->flags & 0x10) && min_blend < assoc->blendAmount)
+        {
+            blend_assoc = ClumpAssocToBlendAssoc(assoc);
+            min_blend = assoc->blendAmount;
+        }
+    }
+    return blend_assoc;
+}
+
+CAnimBlendAssociation *RpAnimBlendClumpGetMainPartialAssociation_N(RpClump *clump, int n)
+{
+    SClumpAnimAssoc *assoc = GetAnimBlendClumpData(clump)->GetClumpAnimAssoc();
+    if (!assoc)
+    {
+        return NULL;
+    }
+    for (size_t i = 0; assoc; assoc = assoc->next, i++)
+    {
+        if (!(assoc->flags & 0x10) && i == n)
+        {
+            return ClumpAssocToBlendAssoc(assoc);
+        }
+    }
+    return NULL;
+}
+
+size_t RpAnimBlendClumpGetNumAssociations(RpClump *clump)
+{
+    SClumpAnimAssoc *assoc = GetAnimBlendClumpData(clump)->GetClumpAnimAssoc();
+    size_t count;
+    for (count = 0; assoc; assoc = assoc->next)
     {
         count++;
-        assoc = assoc->pNext;
-    } while(assoc);
+    }
     return count;
 }
 
-size_t RpAnimBlendClumpGetNumNonPartialAssociations(RpClump *pClump)
+size_t RpAnimBlendClumpGetNumNonPartialAssociations(RpClump *clump)
 {
-    SClumpAnimAssoc *assoc = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData)->pFirstAnimAssoc;
-    size_t count = 0;
-    do
+    SClumpAnimAssoc *assoc = GetAnimBlendClumpData(clump)->GetClumpAnimAssoc();
+    size_t count;
+    for (count = 0; assoc; assoc = assoc->next)
     {
-        if(!(assoc->usFlags & 0x10))
+        if (!(assoc->flags & 0x10))
         {
             count++;
         }
-        assoc = assoc->pNext;
-    } while(assoc);
+    }
     return count;
 }
 
-size_t RpAnimBlendClumpGetNumPartialAssociations(RpClump *pClump)
+size_t RpAnimBlendClumpGetNumPartialAssociations(RpClump *clump)
 {
-    SClumpAnimAssoc *assoc = PLUGIN_BLEND_CLUMP(pClump, pBlendClumpData)->pFirstAnimAssoc;
-    size_t count = 0;
-    do
+    SClumpAnimAssoc *assoc = GetAnimBlendClumpData(clump)->GetClumpAnimAssoc();
+    size_t count;
+    for (count = 0; assoc; assoc = assoc->next)
     {
-        if(assoc->usFlags & 0x10)
+        if (assoc->flags & 0x10)
         {
             count++;
         }
-        assoc = assoc->pNext;
-    } while(assoc);
+    }
     return count;
 }

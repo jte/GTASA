@@ -2,11 +2,11 @@
 
 enum eEntityType
 {
-    ENTITY_TYPE_NOTHING,
-    ENTITY_TYPE_BUILDING,
-    ENTITY_TYPE_VEHICLE,
-    ENTITY_TYPE_PED,
-    ENTITY_TYPE_OBJECT,
+    ENTITY_TYPE_NOTHING, // 0
+    ENTITY_TYPE_BUILDING, // 1
+    ENTITY_TYPE_VEHICLE, // 2
+    ENTITY_TYPE_PED, // 3
+    ENTITY_TYPE_OBJECT, // 4
     ENTITY_TYPE_DUMMY,
     ENTITY_TYPE_NOTINPOOLS
 };
@@ -33,33 +33,34 @@ class CEntity : public CPlaceable
 {
 public:
     // virtual methods
-	virtual void Add(); // DONE
-	virtual void Add(const CRect& rect);
-    virtual void CreateRwObject();
-	virtual void DeleteRwObject();
-    virtual void FlagToDestroyWhenNextProcessed();
-    virtual CRect GetBoundRect() const;
-    virtual void PreRender();
-    virtual void ProcessCollision();
-	virtual void ProcessControl();
-    virtual void ProcessShift();
+    virtual ~CEntity();
+    virtual void Add(const CRect& rect);
+    virtual void Add(); // DONE
     virtual void Remove();
-    virtual void RemoveLighting(bool bAdjustGlobal);
-	virtual void Render();
-	virtual void SetIsStatic(bool bIsStatic);
-	virtual void SetModelIndex(unsigned int modelIndex); // DONE
-	virtual void SetModelIndexNoCreate(unsigned int);
-	virtual bool SetupLighting();
+    virtual void SetIsStatic(bool); // DONE
+    virtual void SetModelIndex(uint32_t modelIndex); // DONE
+    virtual void SetModelIndexNoCreate(uint32_t);
+    virtual void CreateRwObject();
+    virtual void DeleteRwObject();
+    virtual CRect GetBoundRect();
+    virtual void ProcessControl();
+    virtual void ProcessCollision();
+    virtual void ProcessShift();
+    virtual bool TestCollision(bool);
+    virtual void Teleport(CVector, unsigned char);
 	virtual void SpecialEntityCalcCollisionSteps(bool&, bool&);
 	virtual void SpecialEntityPreCollisionStuff(class CPhysical*, bool, bool&, bool&, bool&, bool&);
-	virtual void Teleport(CVector, unsigned char);
-	virtual bool TestCollision(bool);
+    virtual void PreRender();
+    virtual void Render(); // DONE
+    virtual void SetupLighting(); // DONE
+    virtual void RemoveLighting(bool adjustGlobal); // DONE
+    virtual bool FlagToDestroyWhenNextProcessed();
     //
-	void AttachToRwObject(RwObject *pObject, bool bUpdateMatrix);
-	void BuildWindSockMatrix();
-	CEntity();
+	void AttachToRwObject(RwObject* object, bool updateMatrix); // DONE
+	void BuildWindSockMatrix(); // DONE
+	CEntity(); // DONE
 	void CalculateBBProjection(CVector*, CVector*, CVector*, CVector*);
-	void CleanUpOldReference(CEntity **ppRef);
+	void CleanUpOldReference(CEntity** entityRef); // DONE
 	void CreateEffects();
 	void DestroyEffects();
 	void DetachFromRwObject();
@@ -67,19 +68,19 @@ public:
 	void FindTriggerPointCoors(int);
 	void GetBoundCentre() const;
 	void GetBoundCentre(CVector&) const;
-	CColModel *GetColModel();
+	CColModel* GetColModel();
 	size_t GetDistanceFromCentreOfMassToBaseOfModel();
 	bool GetIsBoundingBoxOnScreen();
 	bool GetIsOnScreen();
 	bool GetIsTouching(CEntity*) const;
 	bool GetIsTouching(CVector const&, float) const;
-	//C2dEffect GetRandom2dEffect(int, unsigned char);
+	C2dEffect GetRandom2dEffect(int, unsigned char);
 	bool HasPreRenderEffects();
 	bool IsEntityOccluded();
 	bool IsVisible();
-    bool LivesInThisNonOverlapSector(int iSectorCenterX, int iSectorCenterY);
+    bool LivesInThisNonOverlapSector(int sectorCenterX, int sectorCenterY); // DONE
 	void ModifyMatrixForBannerInWind();
-	void ModifyMatrixForCrane();
+	void ModifyMatrixForCrane(); // DONE
 	void ModifyMatrixForTreeInWind();
 	void PreRenderForGlassWindow();
 	void ProcessLightsForEntity();
@@ -89,11 +90,10 @@ public:
 	void RenderEffects();
 	void ResolveReferences();
 	void SetRwObjectAlpha(int);
-	void SetupBigBuilding();
+	void SetupBigBuilding(); // DONE
 	void UpdateAnim();
 	void UpdateRpHAnim(); // DONE
 	void UpdateRwFrame(); // DONE
-	virtual ~CEntity();
 
     //
     RwObject* GetRwObject() const;
@@ -102,8 +102,20 @@ public:
     bool GetIsDrawnLast() const;
     bool GetIsBackfaceCulled() const;
     size_t GetModelIndex() const;
+    eEntityType GetType() const;
+    eEntityStatus GetStatus() const;
+    bool GetUsesCollision() const;
+    bool GetIsStatic() const;
+    bool GetIsStaticWaitingForCollision() const;
+	uint8_t GetAreaCode() const;
     //
     void SetIsBeingRendered(bool beingRendered);
+    void SetIsBigBuilding(bool bigBuilding);
+    void SetHasContacted(bool hasContacted);
+    void SetIsInSafePosition(bool inSafePosition);
+    void SetWasPostponed(bool wasPostponed);
+    void SetHasHitWall(bool hitWall);
+    void SetRenderDamaged(bool renderDamaged);
 protected:
 private:
     RwObject* m_rwObject; // 24
@@ -149,7 +161,7 @@ private:
     int16_t        m_modelIndex;//34
     class CReference *m_pRef; //36
     
-    class CLinkList<CEntity*> *m_pLastRenderedLink;
+    class CLink<CEntity*> *m_pLastRenderedLink;
     
     uint16_t m_nScanCode;           // used to avoid duplicate queries in sector list processing
     uint8_t m_iplIndex;            // used to define which IPL file object is in +46
@@ -160,7 +172,7 @@ private:
     // num child higher level LODs
     uint8_t numLodChildren; // 52
     // num child higher level LODs that have been rendered
-    signed char numLodChildrenRendered; // 53
+    int8_t numLodChildrenRendered; // 53
 
     //********* BEGIN CEntityInfo **********//
     uint8_t m_type : 3; // what type is the entity              

@@ -14,13 +14,25 @@ CMatrix *CPlaceable::GetMatrix()
 
 CVector CPlaceable::GetPos() const
 {
-    if(m_xyz)
+    if (m_xyz)
     {
-        return CVector(m_xyz->matrix.m_matrix.pos.x, m_xyz->matrix.m_matrix.pos.y, m_xyz->matrix.m_matrix.pos.z);
+        return CVector(m_xyz->GetMatrix().pos);
     }
     else
     {
-        return m_placement.pos;
+        return m_placement.GetPos();
+    }
+}
+
+void CPlaceable::SetPos(const CVector& pos)
+{
+    if (m_xyz)
+    {
+        m_xyz->GetMatrix().pos = pos;
+    }
+    else
+    {
+        m_placement.SetPos(pos);
     }
 }
 

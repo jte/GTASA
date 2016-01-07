@@ -1,5 +1,8 @@
 #pragma once
 
+class CAnimBlendSequence;
+class CAnimBlendAssociation;
+
 class CAnimBlendNode
 {
 public:
@@ -13,15 +16,15 @@ public:
 	void Init();
 	//* NextKeyFrameCompressed()                              #
 	//* NextKeyFrameNoCalc()
-	//* SetupKeyFrameCompressed()                             #
+	bool SetupKeyFrameCompressed();
 	//* Update(CVector&, CQuaternion&, float)                 #
 	//* UpdateCompressed(CVector&, CQuaternion&, float)       #
 	//* UpdateTime()
 private:
     float m_theta0; // angle between two quaternions
     float m_theta1; // 1 / sin(m_theta0), used in slerp calculation
-    uint16_t m_endKeyFrameId;
-    uint16_t m_startKeyFrameId;
+    int16_t m_endKeyFrameId;
+    int16_t m_startKeyFrameId;
     float m_timeDelta;
     CAnimBlendSequence* m_sequence;
     CAnimBlendAssociation* m_assoc;

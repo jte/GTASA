@@ -1,35 +1,5 @@
 #include "StdInc.h"
 
-struct SKeyFrame
-{
-    CQuaternion rotation; // 4*4=16
-    float time; // 4
-};
-
-struct SChildKeyFrame : SKeyFrame
-{
-};
-
-struct SRootKeyFrame : SKeyFrame
-{
-    CVector translation; // 3*4=12
-};
-
-struct SCompressedKeyFrame
-{
-    CompressedQuaternion rotation;
-    FixedPoint time;
-};
-
-struct SCompressedChildKeyFrame : SCompressedKeyFrame
-{
-};
-
-struct SCompressedRootKeyFrame : SCompressedKeyFrame
-{
-    CompressedVector translation;
-};
-
 CAnimBlendSequence::CAnimBlendSequence()
 {
     m_numFramesSet = 0;
@@ -168,4 +138,9 @@ void CAnimBlendSequence::RemoveQuaternionFlips()
             keyFrame->rotation = -keyFrame->rotation;
         }
     }
+}
+
+bool CAnimBlendSequence::GetHasBoneIdSet() const
+{
+    return m_hasBoneIdSet;
 }

@@ -51,7 +51,7 @@ void CTimer::Initialise()
     ms_fTimeStep = 1.0f;
     ms_fTimeStepNonClipped = 1.0f;
     LARGE_INTEGER Freq;
-    if(QueryPerformanceFrequency(&Freq))
+    if (QueryPerformanceFrequency(&Freq))
     {
         timerDef = Win32GetTime;
         timerCyclesPerMillisecond = Freq.LowPart / 1000;
@@ -74,25 +74,26 @@ void CTimer::UpdateVariables(float dt)
     float dts = dt / timerCyclesPerMillisecond;
     m_snPreviousTimeInMillisecondsNonClipped += static_cast<size_t>(dts);
     ms_fOldTimeStep = dts / 20;
+    dts = ClampMax(dts, 300);
     // clip to 300 ms
     if(dts > 300)
     {
         dts = 300;
     }
     m_snTimeInMilliseconds = static_cast<size_t>(dts);
-    if(ms_fOldTimeStep < 1.0f/100.0f)
+    if (ms_fOldTimeStep < 1.0f/100.0f)
     {
-        if(!m_UserPause && !m_CodePause && !CSpecialFX::bSnapShotActive)
+        if (!m_UserPause && !m_CodePause && !CSpecialFX::bSnapShotActive)
         {
             ms_fOldTimeStep = 1.0f/100.0f;
         }
     }
     ms_fTimeStepNonClipped = ms_fTimeStep;
-    if(ms_fOldTimeStep >= 3.0f)
+    if (ms_fOldTimeStep >= 3.0f)
     {
         ms_fTimeStep = 3.0f;
     }
-    else if(ms_fOldTimeStep > 1.0f/100000.0f)
+    else if (ms_fOldTimeStep > 1.0f/100000.0f)
     {
         ms_fTimeStep = ms_fOldTimeStep;
     }
@@ -104,7 +105,7 @@ void CTimer::UpdateVariables(float dt)
 
 void CTimer::Suspend()
 {
-    if(timerRunning)
+    if (timerRunning)
     {
         renderTimerPauseCount++;
         if(renderTimerPauseCount > 1)
@@ -116,9 +117,9 @@ void CTimer::Suspend()
 
 void CTimer::Resume()
 {
-    if(timerRunning)
+    if (timerRunning)
     {
-        if(renderTimerPauseCount == 1)
+        if (renderTimerPauseCount == 1)
         {
             uint64_t current_time = timerDef();
             renderStartTime = current_time - renderTimerPauseTime;
@@ -163,4 +164,19 @@ void CTimer::EndUserPause()
 float CTimer::GetTimeStep()
 {
     return ms_fTimeStep;
+}
+
+size_t CTimer::GetCurrentTimeMs()
+{
+    return m_snTimeInMilliseconds;
+}
+
+size_t CTimer::GetCodePause()
+{
+    return m_CodePause;
+}
+
+size_t CTimer::GetUserPause()
+{
+    return m_UserPause;
 }

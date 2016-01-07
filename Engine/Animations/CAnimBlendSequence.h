@@ -1,5 +1,39 @@
 #pragma once
 
+#include "../CompressedQuaternion.h"
+#include "../FixedPoint.h"
+#include "../CompressedVector.h"
+
+struct SKeyFrame
+{
+    CQuaternion rotation; // 4*4=16
+    float time; // 4
+};
+
+struct SChildKeyFrame : SKeyFrame
+{
+};
+
+struct SRootKeyFrame : SKeyFrame
+{
+    CVector translation; // 3*4=12
+};
+
+struct SCompressedKeyFrame
+{
+    CompressedQuaternion rotation;
+    FixedPoint time;
+};
+
+struct SCompressedChildKeyFrame : SCompressedKeyFrame
+{
+};
+
+struct SCompressedRootKeyFrame : SCompressedKeyFrame
+{
+    CompressedVector translation;
+};
+
 class CAnimBlendSequence
 {
 public:
@@ -21,6 +55,7 @@ public:
     bool GetIsRoot() const;
     bool GetIsCompressed() const;
     bool GetIsUsingExternalMemory() const;
+    bool GetHasBoneIdSet() const;
     uint16_t GetNumKeyFrames() const;
     struct SKeyFrame* GetKeyFrame(size_t id, bool isRoot) const;
     uint32_t GetHash() const;

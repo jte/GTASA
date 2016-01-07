@@ -20,7 +20,7 @@ void CCustomBuildingDNPipeline::SetPrelitColors(RpAtomic* atomic, float dnParam)
     RwRGBA* nightColors = PLUGIN_EXTRAVERTCOLOUR(geometry, nightColors);
     RpGeometry* lockedGeometry = RpGeometryLock(geometry, 8);
     Clamp(0.0f, dnParam, 1.0f);
-    for(size_t i = 0; i < geometry->numVertices; i++)
+    for (size_t i = 0; i < geometry->numVertices; i++)
     {
         geometry->preLitLum[i].red   = dayColors[i].red   * (1.0 - dnParam) + nightColors[i].red   * dnParam;
         geometry->preLitLum[i].green = dayColors[i].green * (1.0 - dnParam) + nightColors[i].green * dnParam;
@@ -37,14 +37,14 @@ bool CCustomBuildingDNPipeline::ExtraVertColourPluginAttach()
                                                               pluginExtraVertColourConstructorCB,
                                                               pluginExtraVertColourDestructorCB,
                                                               0);
-    if(ms_extraVertColourPluginOffset == -1)
+    if (ms_extraVertColourPluginOffset == -1)
     {
         return false;
     }
-    if(RpGeometryRegisterPluginStream(MAKECHUNKID(rwVENDORID_ROCKSTAR, rwID_EXTRAVERTCOLOUR),
-                                      pluginExtraVertColourStreamReadCB,
-                                      pluginExtraVertColourStreamWriteCB,
-                                      pluginExtraVertColourStreamGetSizeCB) < 0 )
+    if (RpGeometryRegisterPluginStream(MAKECHUNKID(rwVENDORID_ROCKSTAR, rwID_EXTRAVERTCOLOUR),
+                                       pluginExtraVertColourStreamReadCB,
+                                       pluginExtraVertColourStreamWriteCB,
+                                       pluginExtraVertColourStreamGetSizeCB) < 0 )
     {
         ms_extraVertColourPluginOffset = -1;
         return false;
@@ -54,7 +54,7 @@ bool CCustomBuildingDNPipeline::ExtraVertColourPluginAttach()
 
 void* CCustomBuildingDNPipeline::pluginExtraVertColourConstructorCB(void* object, RwInt32 offset, RwInt32 size)
 {
-    if(ms_extraVertColourPluginOffset != -1)
+    if (ms_extraVertColourPluginOffset != -1)
     {
         PLUGIN_EXTRAVERTCOLOUR(object, nightColors) = NULL;
         PLUGIN_EXTRAVERTCOLOUR(object, dayColors) = NULL;
@@ -66,12 +66,12 @@ void* CCustomBuildingDNPipeline::pluginExtraVertColourConstructorCB(void* object
 void* CCustomBuildingDNPipeline::pluginExtraVertColourDestructorCB(void* object, RwInt32 offset, RwInt32 size)
 {
     RwRGBA* nightColors = PLUGIN_EXTRAVERTCOLOUR(object, nightColors);
-    if(nightColors)
+    if (nightColors)
     {
         CMemoryMgr::Free(nightColors);
     }
     RwRGBA* dayColors = PLUGIN_EXTRAVERTCOLOUR(object, dayColors);
-    if(dayColors)
+    if (dayColors)
     {
         CMemoryMgr::Free(dayColors);
     }
@@ -88,7 +88,7 @@ RwStream* CCustomBuildingDNPipeline::pluginExtraVertColourStreamReadCB(RwStream 
 {
     float buffer;
     RwStreamRead(stream, &buffer, sizeof(buffer));
-    if(buffer)
+    if (buffer)
     {
         RpGeometry* geometry = (RpGeometry*)object;
         RwRGBA** nightColors = &PLUGIN_EXTRAVERTCOLOUR(object, nightColors);
@@ -98,9 +98,9 @@ RwStream* CCustomBuildingDNPipeline::pluginExtraVertColourStreamReadCB(RwStream 
         *dayColors = (RwRGBA*)CMemoryMgr::Malloc(geometry->numVertices * sizeof(RwRGBA));
         *dnParam = 1.0f;
         RwStreamRead(stream, *dayColors, sizeof(RwRGBA) * geometry->numVertices);
-        if(geometry->preLitLum)
+        if (geometry->preLitLum)
         {
-            for(size_t i = 0; i < geometry->numVertices; i++)
+            for (size_t i = 0; i < geometry->numVertices; i++)
             {
                 (*nightColors)[i].red = geometry->preLitLum[i].red;
                 (*nightColors)[i].green = geometry->preLitLum[i].green;
@@ -112,10 +112,10 @@ RwStream* CCustomBuildingDNPipeline::pluginExtraVertColourStreamReadCB(RwStream 
     return stream;
 }
 
-RwStream* CCustomBuildingDNPipeline::pluginExtraVertColourStreamWriteCB(RwStream *stream, RwInt32 binaryLength, const void *object, RwInt32 offsetInObject, RwInt32 sizeInObject)
+RwStream* CCustomBuildingDNPipeline::pluginExtraVertColourStreamWriteCB(RwStream* stream, RwInt32 binaryLength, const void* object, RwInt32 offsetInObject, RwInt32 sizeInObject)
 {
     RwStreamWrite(stream, PLUGIN_EXTRAVERTCOLOUR(object, nightColors), sizeof(RwRGBA*));
-    if(PLUGIN_EXTRAVERTCOLOUR(object, nightColors))
+    if (PLUGIN_EXTRAVERTCOLOUR(object, nightColors))
     {
         RpGeometry* geometry = (RpGeometry*)object;
         RwStreamWrite(stream, (void*)*(int*)PLUGIN_EXTRAVERTCOLOUR(object, nightColors), geometry->numVertices * sizeof(RwRGBA));

@@ -3,7 +3,7 @@
 class CWeaponEffects
 {
 public:
-	* CWeaponEffects()
+	/* CWeaponEffects()
 	* ClearCrossHair(int)
 	* ClearCrossHairImmediately(int)
 	* ClearCrossHairs()
@@ -14,7 +14,7 @@ public:
 	* MarkTarget(int, CVector, unsigned char, unsigned char, unsigned char, unsigned char, float, unsigned char)
 	* Render()
 	* Shutdown()
-	* ~CWeaponEffects()
+	* ~CWeaponEffects()*/
 protected:
 private:
 };

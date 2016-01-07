@@ -41,7 +41,7 @@ void CCam::Finalise_DW_CineyCams(CVector* a2, CVector* a3, float a4, float a5, f
     right.Normalise();
     Up = CrossProduct(right, Front);
     FOV = a5;
-    RwCameraSetNearClipPlane(Scene.Camera, 0.4f);
+    RwCameraSetNearClipPlane(gScene.camera, 0.4f);
     CacheLastSettingsDWCineyCam();
     gLastFrameProcessedDWCineyCam = CTimer::GetFrameCounter();
     gHandShaker.Process(a7);
@@ -83,13 +83,13 @@ void CCam::GetCoreDataForDWCineyCamMode(CEntity** targetEntity, CVehicle** targe
 
 void CCam::Process_Rocket(const CVector& a2, float a3, float a4, float a5, bool a6)
 {
-    if(CamTargetEntity->GetType() == ENTITY_TYPE_PED)
+    if (CamTargetEntity->GetType() == ENTITY_TYPE_PED)
     {
         CPed* ped = (CPed*)CamTargetEntity;
         FOV = 70.0f;
-        if(ResetStatics)
+        if (ResetStatics)
         {
-            if(!CCamera::m_bUseMouse3rdPerson || ped->pAutoAimTarget)
+            if (!CCamera::m_bUseMouse3rdPerson || ped->pAutoAimTarget)
             {
                 m_fVerticalAngle = 0.0f;
                 m_fHorizontalAngle = ped->fCurrentRotation - M_PI/2;
@@ -105,7 +105,7 @@ void CCam::Process_Rocket(const CVector& a2, float a3, float a4, float a5, bool 
             dword_B6FFF8 = 0;
             m_bCollisionChecksOn = 1;
         }
-        if(ped->GetRwObject())
+        if (ped->GetRwObject())
         {
             ped->UpdateRwMatrix();
         }
@@ -114,7 +114,7 @@ void CCam::Process_Rocket(const CVector& a2, float a3, float a4, float a5, bool 
         ped->GetBonePosition(Source, 5, 1);
         Source.z += 0.1f;
 
-        CPad__GetPad(0);
+        CPad::GetPad(0);
         if(CPad::NewMouseControllerState.X != 0.0 || CPad::NewMouseControllerState.Y != 0.0)
         {
             m_fHorizontalAngle += CPad::NewMouseControllerState.X * -3.0 * FOV / 80.0f * CCamera::m_fMouseAccelHorzntl;
@@ -145,7 +145,7 @@ void CCam::Process_Rocket(const CVector& a2, float a3, float a4, float a5, bool 
         GetVectorsReadyForRW();
         TheCamera.pTargetEntity->fCurrentRotation = CGeneral::GetATanOfXY(pThis->Front.x, pThis->Front.y) - M_PI/2;
         TheCamera.pTargetEntity->fTargetRotation = TheCamera.pTargetEntity->fCurrentRotation;
-        if ( a6 )
+        if ( a6 ) // mark target
         {
             CPlayerPed* playerPed = FindPlayerPed(-1);
             CPlayerInfo* playerData = playerPed->pPlayerData;
@@ -198,4 +198,52 @@ void CCam::Process_Rocket(const CVector& a2, float a3, float a4, float a5, bool 
         }
     }
     return RwCameraSetNearClipPlane(Scene.Camera, flt_8CCC9C);
+}
+
+void CCam::Process_SpecialFixedForSyphon(const CVector& target, float, float, float)
+{
+    Source = m_cvecCamFixedModeSource;
+    m_cvecTargetCoorsForFudgeInter = target;
+    m_cvecTargetCoorsForFudgeInter.z += m_fSyphonModeTargetZOffSet;
+    CVector target_ = target;
+    Front = target_ - Source;
+    TheCamera.AvoidTheGeometry(m_cvecCamFixedModeSource, m_cvecTargetCoorsForFudgeInter, Source, FOV);
+    Front.z += m_fSyphonModeTargetZOffSet;
+    GetVectorsReadyForRW();
+    Up += m_cvecCamFixedModeUpOffSet;
+    Up.Normalise();
+    CVector UxF = CrossProduct(Up, Front);
+    UxF.Normalise();
+    Front = CrossProduct(UxF, Up);
+    Front.Normalise();
+    FOV = 70.0f;
+
+    CPed* ped = reinterpret_cast<CPed*>(CamTargetEntity);
+    if (CamTargetEntity && CamTargetEntity->GetType() == ENTITY_TYPE_PED && ped->pAutoAimTarget )
+    {
+        CWeaponInfo* weapInfo = CWeaponInfo::GetWeaponInfo(ped->Weapons[ped->bCurrentWeaponSlot].m_eWeaponType, ped->GetWeaponSkill());
+        if (weapInfo && !weapInfo->m_aimWithArm || ped->bIsDucking && weapInfo->m_fireType != WEAPON_FIRE_TYPE_MELEE)
+        {
+            CVector pedToTarget = ped->pAutoAimTarget->GetPos() - ped->GetPos();
+            ped->fTargetRotation = atan2(m_cvecCamFixedModeSource.y, -pedToTarget.x);
+            ped->fCurrentRotation = ped->fTargetRotation;
+            ped->SetAngle(ped->fTargetRotation);
+            ped->UpdateRW();
+        }
+    }
+}
+
+void CCam::GetVectorsReadyForRW()
+{
+    CVector up = Up;
+    Up = CVector(0.0f, 0.0f, 1.0f);
+    Front.Normalise();
+    if (Front.x == 0.0f && Front.y == 0.0f)
+    {
+        Front.x = 0.0001f;
+        Front.y = 0.0001f;
+    }
+    CVector FxU = CrossProduct(Front, up);
+    FxU.Normalise();
+    Up = CrossProduct(FxU, Front);
 }

@@ -5,7 +5,7 @@ const float DotProduct(const CVector& first, const CVector& second)
     return first.x * second.x + first.y * second.y + first.z * second.z;
 }
 
-const CVector CrossProduct(const CVector& first, const CVector& second)
+CVector CrossProduct(const CVector& first, const CVector& second)
 {
     return CVector(second.z * first.y - first.z * second.y, first.z * second.x - second.z * first.x, first.x * second.y - second.x * first.y);
 }
@@ -13,7 +13,7 @@ const CVector CrossProduct(const CVector& first, const CVector& second)
 void CVector::Normalise()
 {
     float fLength = MagnitudeSquared();
-    if(fLength > 0.0)
+    if (fLength > 0.0)
     {
         x /= fLength;
         y /= fLength;

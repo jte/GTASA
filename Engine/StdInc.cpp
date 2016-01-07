@@ -1,3 +1,3 @@
 #include "StdInc.h"
 
-Scene_t Scene;
+Scene_t gScene;

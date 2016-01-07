@@ -27,7 +27,7 @@ public:
 	//* PopMemId()
 	//* PrintFrequencies()
 	//* PushMemId(int)
-	//* Realloc(void*, unsigned int)
+	void* Realloc(void* mem, unsigned int size);
 	//* RegisterFree(void*)
 	//* RegisterMalloc(void*)
 	static void ReleaseScratchPad(); // DONE

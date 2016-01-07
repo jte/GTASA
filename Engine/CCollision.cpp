@@ -1,41 +1,27 @@
 #include "StdInc.h"
 
-bool CCollision::TestSphereBox(const CSphere& sphere, const CBox& box)
-{
-  return sphere->center.x + sphere->radius >= box->max.x
-      && sphere->center.x - sphere->radius <= box->min.x
-      && sphere->center.y + sphere->radius >= box->max.y
-      && sphere->center.y - sphere->radius <= box->min.y
-      && sphere->center.z + sphere->radius >= box->max.z
-      && sphere->center.z - sphere->radius <= box->min.z;  
-}
-
 bool CCollision::ProcessLineTriangle(CColLine const&, CompressedVector const*, CColTriangle const&, CColTrianglePlane const&, CColPoint&, float&, CStoredCollPoly*)
 {
 
 }
 
-bool CCollision::ProcessSphereSphere(CColSphere const &first, CColSphere const &second, CColPoint &point, float &fMaxTouchDistance)
+bool CCollision::ProcessSphereSphere(const CColSphere& first, const CColSphere& second, CColPoint& point, float& depth)
 {
-    CVector vecDelta = first.vecCenter - second.vecCenter;
-    float fDistSq = vecDelta.LengthSquared();
-    float fRadiiSum = first.fRadius + second.fRadius;
-    float fTouchDist = vecDelta.Length() - second.fRadius;
-    if(fTouchDist < 0.0)
+    CVector delta = first.GetCenter() - second.GetCenter();
+    float fDistSq = delta.MagnitudeSquared();
+    float radiiSum = first.GetRadius() + second.GetRadius();
+    float touchDistSq = ClampMin(delta.Magnitude() - second.GetRadius(), 0.0f);
+    touchDistSq = touchDistSq * touchDistSq;
+    if (touchDistSq < depth && fDistSq <= radiiSum * radiiSum)
     {
-        fTouchDist = 0.0;
-    }
-    fTouchDist *= fTouchDist;
-    if(fTouchDist < fMaxTouchDistance && fDistSq <= fRadiiSum * fRadiiSum)
-    {
-        vecCenterDistance.Normalise();
-        point.Position = first.vecCenter - vecDelta * fTouchDist;
-        point.Normal = vecDelta;
-        point.ucSurfaceTypeA = first.ucSurfaceType;
-        point.ucSurfaceTypeB = second.ucSurfaceType;
-        point.ucLightingA = first.ucLighting;
-        point.ucLightingB = second.ucLighting;
-        point.fDepth = (first.fRadius + second.fRadius) - vecDelta.Length();
+        delta.Normalise();
+        point.pos = first.GetCenter() - delta * touchDistSq;
+        point.normal = delta;
+        point.surfaceTypeA = first.GetSurfaceTypeA();
+        point.lightingA = first.GetLighting();
+        point.surfaceTypeB = second.GetSurfaceTypeB();
+        point.lightingB = second.GetLighting();
+        point.depth = radiiSum - delta.Magnitude();
         return true;
     }
     return false;
@@ -46,35 +32,34 @@ bool CCollision::ProcessSphereBox(CColSphere const &first, CColBox const &second
 
 }
 
-bool CCollision::ProcessVerticalLine(CColLine const &colLine, CMatrix const &mat, CColModel &colModel, CColPoint &colPoint, float &argFloat, bool, bool, CStoredCollPoly *pCollPoly)
+bool CCollision::ProcessVerticalLine(const CColLine& colLine_, const CMatrix& mat, CColModel& colModel, CColPoint& colPoint, float& depth, bool bSurfaceNotSeeThrough, bool, CStoredCollPoly *pCollPoly)
 {
-    CCollisionData *colData = colModel.pColData;
-    if(!colData)
+    const CCollisionData *colData = colModel.GetColData();
+    if (!colData)
     {
         return false;
     }
-    CVector ds = colLine.vecStart - mat.matrix.pos;
-    colLine.vecStart.x = DotProduct(ds, mat.matrix.right);
-    colLine.vecStart.y = DotProduct(ds, mat.matrix.top);
-    colLine.vecStart.z = DotProduct(ds, mat.matrix.at);
-    CVector de = colLine.vecEnd - mat.matrix.pos;
-    colLine.vecEnd.x = DotProduct(de, mat.matrix.right);
-    colLine.vecEnd.y = DotProduct(de, mat.matrix.top);
-    colLine.vecEnd.z = DotProduct(de, mat.matrix.at);
-    if(!TestLineBox_DW(colLine, colModel)) // OR TestLineBox()
+    CColLine colLine = colLine_;
+    CVector ds = colLine.GetStart() - mat.pos;
+    colLine.m_start.x = DotProduct(ds, mat.right);
+    colLine.m_start.y = DotProduct(ds, mat.up);
+    colLine.m_start.z = DotProduct(ds, mat.at);
+    CVector de = colLine.GetEnd() - mat.pos;
+    colLine.m_end.x = DotProduct(de, mat.right);
+    colLine.m_end.y = DotProduct(de, mat.up);
+    colLine.m_end.z = DotProduct(de, mat.at);
+    if (!TestLineBox(colLine, colModel))
     {
         return false;
     }
-    float unkFloat = argFloat;
-    // process spheres; sizeof(ColSphere) = 0x14
-    for(size_t i = 0; i < colData->m_wNumSpheres; i++)
+    float currentDepth = depth;
+    for (size_t i = 0; i < colData->GetNumSpheres(); i++)
     {
-        if(!bSurfaceNotSeeThrough || !g_surfaceInfos.IsSeeThrough(colData->m_pSpheres[i].surface.material))
+        if(!bSurfaceNotSeeThrough || !g_surfaceInfos.IsSeeThrough(colData->GetSphere(i).surface.material))
         {
-            ProcessLineSphere(colLine, colData->m_pSpheres[i], colPoint, unkFloat);
+            ProcessLineSphere(colLine, colData->m_pSpheres[i], colPoint, currentDepth);
         }
     }
-    // process boxes; sizeof(ColBox) = 0x1C
     for(size_t i = 0; i < colData->m_wNumBoxes; i++)
     {
         if(!bSurfaceNotSeeThrough || !g_surfaceInfos.IsSeeThrough(colData->m_pBoxes[i].surface.material))
@@ -84,7 +69,6 @@ bool CCollision::ProcessVerticalLine(CColLine const &colLine, CMatrix const &mat
     }
     CalculateTrianglePlanes(colModel);
     byte_965A20 = 0;
-    // process triangles; sizeof(ColTrianglePlane) = 0xA
     for(size_t i = 0; i < colData->m_wNumTriangles; i++)
     {
         if(!bSurfaceNotSeeThrough || !g_surfaceInfos.IsSeeThrough(colData->m_pTriangles[i].material))
@@ -112,38 +96,38 @@ bool CCollision::ProcessVerticalLine(CColLine const &colLine, CMatrix const &mat
     }
 }
 
-bool CCollision::ProcessLineSphere(const CColLine& colLine, const CColSphere& colSphere, CColPoint& colPoint, float& limit)
+bool CCollision::ProcessLineSphere(const CColLine& colLine, const CColSphere& colSphere, CColPoint& colPoint, float& depth)
 {
-    float r = colSphere.sphere.radius;
-    CVector l = colLine.vecEnd - colLine.vecStart;
+    float r = colSphere.GetRadius();
+    CVector l = colLine.GetEnd() - colLine.GetStart();
     // ||l||
-    float lSq = l.LengthSquared();
+    float lSq = l.MagnitudeSquared();
     // c - o
-    CVector dco = colSphere.sphere.center - colLine.vecStart;
+    CVector dco = colSphere.GetCenter() - colLine.GetStart();
     // -(l * dco)
     float b = -DotProduct(l, dco);
-    float D = b * b - (dco.LengthSquared() - r * r) * lSq;
-    if(D < 0.0f) 
+    float D = b * b - (dco.MagnitudeSquared() - r * r) * lSq;
+    if (D < 0.0f) 
     {   // no intersections
         return false;
     }
     float d = (-b - sqrt(D)) / lSq;
-    if(d < 0.0f || d > 1.0f)
+    if (d < 0.0f || d > 1.0f)
     {   // out of bounds of line segment
         return false;
     }
-    if(d >= limit)
+    if (d >= depth)
     {   // passed user-supplied limit
         return false;
     }
-    colPoint.Position = colLine.vecStart + l * d;
-    colPoint.Normal = colPoint.Position - colSphere.sphere.center;
-    colPoint.Normal.Normalise();
-    colPoint.ucSurfaceTypeB = colSphere.surface.material;
-    colPoint.ucLightingB = colSphere.surface.brightness;
-    colPoint.ucSurfaceTypeA = 0;
-    colPoint.ucLightingA = 0;
-    limit = d;
+    colPoint.pos = colLine.GetStart() + l * d;
+    colPoint.normal = colPoint.pos - colSphere.GetCenter();
+    colPoint.normal.Normalise();
+    colPoint.surfaceTypeB = colSphere.GetSurfaceTypeA();
+    colPoint.lightingB = colSphere.GetLighting();
+    colPoint.surfaceTypeA = 0;
+    colPoint.lightingA = 0;
+    depth = d;
     ms_iProcessLineNumCrossings += 2;
     return true;
 }
@@ -193,7 +177,101 @@ void CCollision::SortOutCollisionAfterLoad()
 
 bool CCollision::TestSphereSphere(const CColSphere& first, const CColSphere& second)
 {
-    CVector dr = first.GetCenter() - second.GetCenter();
-    float touchDistance = first.GetRadius() + second.GetRadius();
-    return dr.LengthSquared() <= touchDistance * touchDistance;
+    CVector midline = first.GetCenter() - second.GetCenter();
+    float radiiSum = first.GetRadius() + second.GetRadius();
+    return midline.MagnitudeSquared() <= radiiSum * radiiSum;
+}
+
+bool CCollision::TestSphereBox(const CSphere& sphere, const CBox& box)
+{
+    return sphere.center.x + sphere.radius >= box.sup.x
+        && sphere.center.x - sphere.radius <= box.inf.x
+        && sphere.center.y + sphere.radius >= box.sup.y
+        && sphere.center.y - sphere.radius <= box.inf.y
+        && sphere.center.z + sphere.radius >= box.sup.z
+        && sphere.center.z - sphere.radius <= box.inf.z;  
+}
+
+void CCollision::GetBoundingBoxFromTwoSpheres(CColBox* box, CColSphere* s1, CColSphere* s2)
+{
+    float radius = s1->GetRadius();
+    CVector bmin;
+    CVector bmax;
+    ///
+    CColSphere* maxX = (s1->GetCenter().x >= s2->GetCenter().x) ? s1 : s2;
+    CColSphere* minX = maxX == s1 ? s2 : s1;
+    bmax.x = minX->GetCenter().x - radius;
+    bmin.x = maxX->GetCenter().x + radius;
+    ///
+    CColSphere* maxY = (s1->GetCenter().y >= s2->GetCenter().y) ? s1 : s2;
+    CColSphere* minY = maxY == s1 ? s2 : s1;
+    bmax.y = minY->GetCenter().y - radius;
+    bmin.y = maxY->GetCenter().y + radius;
+    ///
+    CColSphere* maxZ = (s1->GetCenter().z >= s2->GetCenter().z) ? s1 : s2;
+    CColSphere* minZ = maxZ == s1 ? s2 : s1;
+    bmax.z = minZ->GetCenter().z - radius;
+    bmin.z = maxZ->GetCenter().z + radius;
+}
+
+void CCollision::CalculateTrianglePlanes(CColModel* colModel)
+{
+    if (colModel)
+    {
+        colModel->CalculateTrianglePlanes();
+    }
+}
+
+void CCollision::RemoveTrianglePlanes(CColModel* colModel)
+{
+    if (colModel)
+    {
+        colModel->RemoveTrianglePlanes();
+    }
+}
+
+void CCollision::CalculateTrianglePlanes(CCollisionData* colData)
+{
+    if (!colData->GetNumTriangles())
+    {
+        return;
+    }
+    if (colData->m_pTrianglePlanes)
+    {
+        ms_colModelCache.InsertLink(colData->GetLinkPtr());
+    }
+    else
+    {
+        CLink<CCollisionData*>* link = ms_colModelCache.Insert(colData);
+        if (!link)
+        {
+            CLink<CCollisionData*>* last = ms_colModelCache.GetHead().tail;
+            last->data->RemoveTrianglePlanes();
+            ms_colModelCache.RemoveLink(last);
+            link = ms_colModelCache.Insert(colData);
+        }
+        colData->CalculateTrianglePlanes();
+        colData->SetLinkPtr(link);
+    }
+}
+
+float CCollision::DistToLine(const CVector* origin, const CVector* v1, const CVector* v2)
+{
+    CVector v1o = CVector(*v1) - CVector(*origin);
+    CVector v2o = CVector(*v2) - CVector(*origin);
+    float dot = DotProduct(v1o, v2o);
+    if (dot <= 0.0f)
+    {
+        return v2o.Magnitude();
+    }
+    if (dot < v1o.MagnitudeSquared())
+    {
+        float d = v2o.Magnitude() - dot / v1o.MagnitudeSquared();
+        return d > 0.0f ? d : 0.0f;
+    }
+    else
+    {
+        CVector diff = CVector(*v2) - CVector(*v1);
+        return diff.Magnitude();
+    }
 }

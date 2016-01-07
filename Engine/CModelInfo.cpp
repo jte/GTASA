@@ -10,20 +10,20 @@ CBaseModelInfo* CModelInfo::GetModelInfo(char const* name, int* index)
     size_t hash = CKeyGen::GetUppercaseKey(name);
     size_t pos = 0;
     CBaseModelInfo* info = NULL;
-    if(ms_lastPositionSearched < 20000)
+    if (ms_lastPositionSearched < 20000)
     {
-        for(pos = 0; pos <= 20000; pos++)
+        for (pos = 0; pos <= 20000; pos++)
         {
             info = ms_modelInfoPtrs[pos];
-            if(info && info->m_uiHashKey == hash)
+            if (info && info->m_uiHashKey == hash)
             {
                 break;
             }
         }
     }
-    if(ms_lastPositionSearched >= 20000 || pos >= 20000)
+    if (ms_lastPositionSearched >= 20000 || pos >= 20000)
     {
-        for(pos = 0; pos <= ms_lastPositionSearched; pos++)
+        for (pos = 0; pos <= ms_lastPositionSearched; pos++)
         {
             CBaseModelInfo* info = ms_modelInfoPtrs[pos];
             if(info && info->m_uiHashKey == hash)
@@ -31,12 +31,12 @@ CBaseModelInfo* CModelInfo::GetModelInfo(char const* name, int* index)
                 break;
             }
         }
-        if(pos == ms_lastPositionSearched)
+        if (pos == ms_lastPositionSearched)
         {
             return NULL;
         }
     }
-    if(index)
+    if (index)
     {
         *index = pos;
     }
@@ -47,12 +47,12 @@ CBaseModelInfo* CModelInfo::GetModelInfo(char const* name, int* index)
 CBaseModelInfo* CModelInfo::GetModelInfoFromHashKey(unsigned int hash, int* index)
 {
     CBaseModelInfo* info = NULL;
-    for(size_t i = 0; i < 20000; i++)
+    for (size_t i = 0; i < 20000; i++)
     {
         info = ms_modelInfoPtrs[i];
-        if(info && info->m_uiHashKey == hash)
+        if (info && info->m_uiHashKey == hash)
         {
-            if(index)
+            if (index)
             {
                 *index = i;
             }
@@ -65,10 +65,10 @@ CBaseModelInfo* CModelInfo::GetModelInfoFromHashKey(unsigned int hash, int* inde
 CBaseModelInfo* CModelInfo::GetModelInfo(char const* name, int low, int high)
 {
     size_t hash = CKeyGen::GetUppercaseKey(name);
-    for(size_t i = low; i <= high; i++)
+    for (size_t i = low; i <= high; i++)
     {
         CBaseModelInfo* info = ms_modelInfoPtrs[i];
-        if(info && info->m_uiHashKey == hash)
+        if (info && info->m_uiHashKey == hash)
         {
             return info;
         }
@@ -80,7 +80,7 @@ CBaseModelInfo* CModelInfo::GetModelInfoUInt16(char const* name, unsigned short*
 {
     uint32_t idx = 0;
     GetModelInfo(name, &idx);
-    if(index)
+    if (index)
     {
         *index = idx;
     }
@@ -146,7 +146,7 @@ uint32_t CModelInfo::IsVehicleModelType(int index)
     if(index < 20000)
     {
         CVehicleModelInfo* info = ms_modelInfoPtrs[index];
-        if(info && info->GetModelType() == 6)
+        if (info && info->GetModelType() == 6)
         {
             return info->VehicleType;
         }

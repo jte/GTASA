@@ -19,7 +19,7 @@ void CColModel::MakeMultipleAlloc()
 CColModel& CColModel::operator=(const CColModel& other)
 {
     m_boundingBox = other.m_boundingBox;
-    pad1 = other.pad1;
+    m_colNum = other.m_colNum;
     pad2 = other.pad2;
     pad3 = other.pad3;
     m_flags = other.m_flags;
@@ -31,17 +31,17 @@ CColModel& CColModel::operator=(const CColModel& other)
 
 void* CColModel::operator new(uint32_t size)
 {
-    return CPools::ms_pColModelPool->New(size);
+    return CPools::GetColModelPool()->New();
 }
 
 void CColModel::operator delete(void* object)
 {
-    CPools::ms_pColModelPool->Delete(object);
+	CPools::GetColModelPool()->Delete((CColModel*)object);
 }
 
 CColModel::CColModel()
 {
-    pad1 = 0;
+    m_colNum = 0;
     m_colData = NULL;
     m_flags = 0x04;
 }
@@ -53,7 +53,6 @@ void CColModel::RemoveCollisionVolumes()
         if(m_flags & 2)
         {
             CCollision::RemoveTrianglePlanes(m_colData);
-        
         }
         else
         {
@@ -86,7 +85,17 @@ void CColModel::RemoveTrianglePlanes()
     }
 }
 
+uint8_t CColModel::GetColNum() const
+{
+	return m_colNum;
+}
+
 CColModel::~CColModel()
 {
     RemoveCollisionVolumes();
+}
+
+void CColModel::SetBoundingBox(const CBoundingBox& boundingBox)
+{
+	m_boundingBox = boundingBox;
 }

@@ -68,3 +68,8 @@ void CMemoryMgr::InitMemoryTracking(int block_count)
     PushMemId(0);
     PushMemId(-1);
 }
+
+void* CMemoryMgr::Realloc(void* mem, unsigned int size)
+{
+    return realloc(mem, size);
+}

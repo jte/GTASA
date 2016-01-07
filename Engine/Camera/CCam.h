@@ -3,6 +3,8 @@
 const int NUMBER_OF_VECTORS_FOR_AVERAGE=2;
 #define CAM_NUM_TARGET_HISTORY          4
 
+class CVehicle;
+
 class CCam
 {
 public:
@@ -15,7 +17,7 @@ public:
 	//* GetLookAlongGroundPos(CEntity*, CPed*, CVector&, CVector&)
 	//* GetLookFromLampPostPos(CEntity*, CPed*, CVector&, CVector&)
 	//* GetLookOverShoulderPos(CEntity*, CPed*, CVector&, CVector&)
-	//* GetVectorsReadyForRW()
+	void GetVectorsReadyForRW();
 	//* GetWeaponFirstPersonOn()
 	//* Get_TwoPlayer_AimVector(CVector&)
 	//* Init()
@@ -59,7 +61,7 @@ public:
 	//* Process_FollowPed_SA(CVector const&, float, float, float, bool)
 	//* Process_M16_1stPerson(CVector const&, float, float, float)
 	void Process_Rocket(const CVector& a2, float a3, float a4, float a5, bool a6);
-	//* Process_SpecialFixedForSyphon(CVector const&, float, float, float)
+	void Process_SpecialFixedForSyphon(const CVector&, float, float, float);
 	//* Process_WheelCam(CVector const&, float, float, float)
 	//* RotCamIfInFrontCar(CVector const&, float)
 	bool Using3rdPersonMouseCam();

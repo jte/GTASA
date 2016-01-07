@@ -1,5 +1,8 @@
 #pragma once
 
+#include "CTask.h"
+#include "CPool.h"
+
 class CPools
 {
 public:
@@ -11,7 +14,7 @@ public:
 	//* GetPedRef(CPed*)
 	//* GetVehicle(int)
 	//* GetVehicleRef(CVehicle*)
-	void Initialise();
+	static void Initialise();
 	//* Load()
 	//* LoadObjectPool()
 	//* LoadPedPool()
@@ -24,22 +27,28 @@ public:
 	//* SavePedTasks()
 	//* SaveVehiclePool()
 	//* ShutDown()
+
+    //
+    static CPool<CTask>* GetTaskPool();
+    static CPool<CEvent>* GetEventPool();
+    static CPool<CPtrNodeSingleLink>* GetPtrNodeSingleLinkPool();
+	static CPool<CColModel>* GetColModelPool();
 private:
-	CPool<class CBuilding> *ms_pBuildingPool;
-	CPool<class CColModel> *ms_pColModelPool;
-	CPool<class CDummy> *ms_pDummyPool;
-	CPool<class CEntryInfoNode> *ms_pEntryInfoNodePool;
-	CPool<class CEvent> *ms_pEventPool;
-	CPool<class CNodeRoute> *ms_pNodeRoutePool;
-	CPool<class CObject> *ms_pObjectPool;
-	CPool<class CPatrolRoute> *ms_pPatrolRoutePool;
-	CPool<class CPedAttractor> *ms_pPedAttractorPool;
-	CPool<class CPedIntelligence> *ms_pPedIntelligencePool;
-	CPool<class CPed> *ms_pPedPool;
-	CPool<class CPointRoute> *ms_pPointRoutePool;
-	CPool<class CPtrNodeDoubleLink> *ms_pPtrNodeDoubleLinkPool;
-	CPool<class CPtrNodeSingleLink> *ms_pPtrNodeSingleLinkPool;
-	CPool<class CTaskAllocator> *ms_pTaskAllocatorPool;
-	CPool<class CTask> *ms_pTaskPool;
-	CPool<class CVehicle> *ms_pVehiclePool;
+	static CPool<class CBuilding> *ms_pBuildingPool;
+	static CPool<class CColModel> *ms_pColModelPool;
+	static CPool<class CDummy> *ms_pDummyPool;
+	static CPool<class CEntryInfoNode> *ms_pEntryInfoNodePool;
+	static CPool<class CEvent> *ms_pEventPool;
+	static CPool<class CNodeRoute> *ms_pNodeRoutePool;
+	static CPool<class CObject> *ms_pObjectPool;
+	static CPool<class CPatrolRoute> *ms_pPatrolRoutePool;
+	static CPool<class CPedAttractor> *ms_pPedAttractorPool;
+	static CPool<class CPedIntelligence> *ms_pPedIntelligencePool;
+	static CPool<class CPed> *ms_pPedPool;
+	static CPool<class CPointRoute> *ms_pPointRoutePool;
+	static CPool<class CPtrNodeDoubleLink> *ms_pPtrNodeDoubleLinkPool;
+	static CPool<class CPtrNodeSingleLink> *ms_pPtrNodeSingleLinkPool;
+	static CPool<class CTaskAllocator> *ms_pTaskAllocatorPool;
+	static CPool<class CTask>* ms_pTaskPool;
+	static CPool<class CVehicle> *ms_pVehiclePool;
 };

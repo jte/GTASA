@@ -20,6 +20,8 @@ public:
     static size_t GetFrameCounter();
     //
     static size_t GetCurrentTimeMs();
+    static size_t GetCodePause();
+    static size_t GetUserPause();
 private:
     static bool bSkipProcessThisFrame;
 	static bool bSlowMotionActive;

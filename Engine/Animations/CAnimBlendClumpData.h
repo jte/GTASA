@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CAnimBlendNode.h"
+
 class CAnimBlendHierarchy;
 
 struct AnimBlendFrameData
@@ -17,7 +19,7 @@ struct AnimBlendFrameData
 struct SClumpAnimAssoc
 { // sizeof(SClumpAnimAssoc) = 0x2C
     SClumpAnimAssoc* next;
-    void* userPtr;
+    SClumpAnimAssoc* prev;
     uint16_t animBlendNodeCount;
     uint16_t animGroup;
     CAnimBlendNode** animBlendNodeArray;
@@ -47,9 +49,10 @@ public:
     AnimBlendFrameData* GetFrame(size_t index) const;
     size_t GetAnimBlendNodeCount() const;
     SClumpAnimAssoc* GetClumpAnimAssoc() const;
+    void SetClumpAnimAssoc(SClumpAnimAssoc *assoc);
 protected:
 private:
-    SClumpAnimAssoc* m_clumpAnimAssoc;
+    SClumpAnimAssoc* m_assoc;
     int pad1;
     int m_animBlendNodeCount; // a.k.a bone count
     int pad2;

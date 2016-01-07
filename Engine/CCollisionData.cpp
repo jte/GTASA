@@ -71,7 +71,7 @@ void CCollisionData::CalculateTrianglePlanes()
     {
         for(size_t i = 0; i < m_numTriangles; i++)
         {
-            m_trianglePlanes[i].Set(m_trianglePoints, &m_triangles[i]);
+            m_trianglePlanes[i].Set(m_trianglePoints, m_triangles[i]);
         }
     }
 }
@@ -88,4 +88,34 @@ void CCollisionData::RemoveTrianglePlanes()
         CMemoryMgr::Free(m_trianglePlanes);
     }
     m_trianglePlanes = NULL;
+}
+
+CColSphere& CCollisionData::GetSphere(size_t index) const
+{
+    return m_spheres[index];
+}
+
+void CCollisionData::SetSphere(size_t index, const CColSphere& colSphere) 
+{
+	m_spheres[index] = colSphere;
+}
+
+uint16_t CCollisionData::GetNumSpheres() const
+{
+    return m_numSpheres;
+}
+
+uint16_t CCollisionData::GetNumBoxes() const
+{
+    return m_numBoxes;
+}
+
+uint16_t CCollisionData::GetNumTriangles() const
+{
+    return m_numTriangles;
+}
+
+uint8_t CCollisionData::GetNumDisks() const
+{
+    return m_numDisks;
 }

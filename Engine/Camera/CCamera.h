@@ -44,6 +44,7 @@ public:
 class CCamera
 {
 public:
+    CVector GetPos(); // get current camera pos
 	//* AddShake(float, float, float, float, float)
 	//* AddShakeSimple(float, int, float)
 	//* AllowShootingWith2PlayersInCar(bool)
@@ -52,10 +53,10 @@ public:
 	//* CCamera()
 	//* CalculateDerivedValues(bool, bool)
 	//* CalculateFrustumPlanes(bool)
-	//* CalculateGroundHeight(unsigned int)
-	//* CalculateMirroredMatrix(CVector, float, CMatrix*, CMatrix*)
+    //float CalculateGroundHeight(uint32_t a2);
+	void CalculateMirroredMatrix(CVector a1, float a2, CMatrix* a3, CMatrix* a4);
 	//* CamControl()
-	//* CamShake(float, float, float, float)
+	void CamShake(float shakeFactor, float shakeX, float shakeY, float shakeZ);
 	//* CameraColDetAndReact(CVector*, CVector*)
 	//* CameraGenericModeSpecialCases(CPed*)
 	//* CameraPedAimModeSpecialCases(CPed*)
@@ -71,7 +72,7 @@ public:
 	//* DrawBordersForWideScreen()
 	//* Enable1rstPersonCamCntrlsScript()
 	//* Enable1rstPersonWeaponsCamera()
-	//* Fade(float, short)
+	void Fade(float duration, short inOut);
 	//* Find3rdPersonCamTargetVector(float, CVector, CVector&, CVector&)
 	//* Find3rdPersonQuickAimPitch()
 	//* FindCamFOV()
@@ -82,7 +83,7 @@ public:
 	//* GetCutsceneBarHeight()
 	//* GetFading()
 	//* GetFadingDirection()
-	//* GetGameCamPosition()
+	CVector& GetGameCamPosition();
 	//* GetLookDirection()
 	//* GetLookingForwardFirstPerson()
 	//* GetLookingLRBFirstPerson()
@@ -120,8 +121,8 @@ public:
 	//* ProcessShake(float)
 	//* ProcessVectorMoveLinear()
 	//* ProcessVectorMoveLinear(float)
-	//* ProcessVectorTrackLinear()
-	//* ProcessVectorTrackLinear(float)
+	void ProcessVectorTrackLinear();
+	void ProcessVectorTrackLinear(float time);
 	//* ProcessWideScreenOn()
 	//* RenderMotionBlur()
 	//* ResetDuckingSystem(CPed*)
@@ -130,7 +131,7 @@ public:
 	//* RestoreWithJumpCut()
 	//* SetCamCollisionVarDataSet(int)
 	//* SetCamCutSceneOffSet(CVector const&)
-	//* SetCamPositionForFixedMode(CVector const&, CVector const&)
+	void SetCamPositionForFixedMode(const CVector& pos, const CVector& dir);
 	//* SetCameraDirectlyBehindForFollowPed_CamOnAString()
 	//* SetCameraDirectlyBehindForFollowPed_ForAPed_CamOnAString(CPed*)
 	//* SetCameraDirectlyInFrontForFollowPed_CamOnAString()
@@ -169,9 +170,9 @@ public:
 	//* UpdateTargetEntity()
 	//* Using1stPersonWeaponMode()
 	//* VectorMoveLinear(CVector*, CVector*, float, bool)
-	//* VectorTrackLinear(CVector*, CVector*, float, bool)
+	void VectorTrackLinear(CVector* start, CVector* end, float duration, bool constSpeed);
 	//* ~CCamera()
-private:
+//private:
    // CPlaceable
     CPlaceable   Placeable;
     // End CPlaceable
@@ -476,4 +477,18 @@ private:
 
     size_t   m_uiFadeTimeStarted;
     size_t   m_uiFadeTimeStartedMusic;
+    size_t pad1[5];
+    //
+    float m_vectorTrackLinearStartTime;
+    float m_vectorTrackLinearEndTime;
+    CVector m_vectorTrackLinearStart;
+    CVector m_vectorTrackLinearEnd;
+    bool m_vectorTrackLinearConstSpeed;
+    uint8_t pad2[3];
+    CVector m_vectorTrackLinearCurrent;
+    bool m_vectorTrackLinearProcessed;
+    //
+    //## more data
+    //
+    bool m_lockCameraTargetPos;
 };

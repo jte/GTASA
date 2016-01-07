@@ -2,12 +2,12 @@
 
 CAnimBlendAssociation::CAnimBlendAssociation(CAnimBlendAssociation& assoc)
 {
-    SetCurrentTime(assoc.m_assoc.fCurrentTime / assoc.m_assoc.fTotalTime * m_assoc.pAnimHierarchy->fTotalTime);
+    SetCurrentTime(assoc.m_assoc.currentTime / assoc.m_assoc.fTotalTime * m_assoc.animHierarchy->m_totalTime);
 }
 
 void CAnimBlendAssociation::Init(RpClump *pClump, CAnimBlendHierarchy *pHier)
 {
-    size_t uiAnimBlendNodeCount = PLUGIN_BLEND_CLUMP(pBlendClumpData)->uiAnimBlendNodeCount;
+    size_t uiAnimBlendNodeCount = PLUGIN_BLEND_CLUMP(pClump)->uiAnimBlendNodeCount;
     AllocateBlendNodes(uiAnimBlendNodeCount);
     for(size_t i = 0; i < uiAnimBlendNodeCount; i++)
     {   

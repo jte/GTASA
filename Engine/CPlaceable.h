@@ -2,6 +2,8 @@
 
 #include "Engine\CSimpleTransform.h"
 
+class CMatrixLink;
+
 class CPlaceable
 {
 public:
@@ -20,6 +22,7 @@ public:
 	void SetMatrix(CMatrix const &mat);
 	void ShutdownMatrixArray();
     CVector GetPos() const;
+    void SetPos(const CVector& pos);
 	~CPlaceable();
 
     //
@@ -27,8 +30,12 @@ public:
     CVector GetRight() const;
     CVector GetTop() const;
     void UpdateRwMatrix();
+    CMatrixLink* GetMatrixLink()
+    {
+        return m_xyz;
+    }
 protected:
 private:
-    CSimpleTransform m_placement;
-    class CMatrixLink *m_xyz;
+    CSimpleTransform m_placement; // static matrix
+    CMatrixLink* m_xyz; // matrix
 };

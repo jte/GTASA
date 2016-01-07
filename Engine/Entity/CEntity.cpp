@@ -8,9 +8,34 @@ void CEntity::Add(const CRect& rect)
     sector.bottom = ClampMin(sector.bottom, -3000.0f);
     // NOTE: R* checks for > 3000.0f bound and clamps to 2999.0f
     sector.top = ClampMax(sector.top, 2999.0f);
-    if(m_isBigBuilding)
+    if (m_isBigBuilding)
     {
-#pragma message("CEntity::Add(const CRect& rect) TODO")
+    v6 = (unsigned __int64)(rect.left * 0.005 + 15.0);
+    v32 = (unsigned __int64)(rect.right * 0.005 + 15.0);
+    v7 = (unsigned __int64)(rect.top * 0.005 + 15.0);
+    sector_top = (unsigned __int64)(rect.bottom * 0.005 + 15.0);
+    if (sector.top <= v7 )
+    {
+      v8 = &CWorld::ms_aLodPtrLists[v6 + 30 * sector_top];
+      v24 = v7 - sector_top + 1;
+      do
+      {
+        if ( v6 <= v32 )
+        {
+          v10 = v32 - v6 + 1;
+          do
+          {
+            CPtrNodeSingleLink__operator new(v8, v26);
+            v8 = (CPtrNodeSingleLink *)((char *)v8 + 4);
+            --v10;
+          }
+          while ( v10 );
+        }
+        v8 += 30;
+        LODWORD(sector_top) = v24 - 1;
+      }
+      while ( v24-- != 1 );
+    }
     }
     else
     {
@@ -19,14 +44,14 @@ void CEntity::Add(const CRect& rect)
         sector.right = floor(lrect.right * GRID_UNIT + GRID_OFFSET);
         sector.top = floor(lrect.top * GRID_UNIT + GRID_OFFSET);
         // Scan bottom to top
-        for(size_t i = sector.bottom; i <= sector.top; i++)
+        for (size_t i = sector.bottom; i <= sector.top; i++)
         {
             // Scan left to right
-            for(size_t j = sector.left; j <= sector.right; j++)
+            for (size_t j = sector.left; j <= sector.right; j++)
             {
                 size_t iclamp;
                 size_t jclamp;
-                switch(m_type)
+                switch (m_type)
                 {
                     case ENTITY_TYPE_BUILDING:
                     {
@@ -63,12 +88,13 @@ void CEntity::Add(const CRect& rect)
 
 void CEntity::UpdateRpHAnim()
 {
-    RpAtomic *atomic = GetFirstAtomic(m_rwObject);
-    if(atomic && RpSkinGeometryGetSkin(atomic->geometry))
+    RpClump *clump = reinterpret_cast<RpClump*>(m_rwObject);
+    RpAtomic *atomic = GetFirstAtomic(clump);
+    if (atomic && RpSkinGeometryGetSkin(atomic->geometry))
     {
-        if(!m_dontUpdateHierarchy)
+        if (!m_dontUpdateHierarchy)
         {
-            RpHAnimHierarchy *animHierarchy = GetAnimHierarchyFromSkinClump(m_rwObject);
+            RpHAnimHierarchy *animHierarchy = GetAnimHierarchyFromSkinClump(clump);
             RpHAnimHierarchyUpdateMatrices(animHierarchy);
         }
     }
@@ -86,13 +112,13 @@ CEntity::CEntity()
     m_iplIndex = 0;
     m_ucSeedColFlags = rand();
     m_pRef = NULL;
-   // pLastRenderedLink = NULL;
+    m_pLastRenderedLink = NULL;
     numLodChildren = 0;
     numLodChildrenRendered = 0;
     m_pLod = NULL;
 }
 
-void CEntity::SetModelIndex(unsigned int modelIndex)
+void CEntity::SetModelIndex(uint32_t modelIndex)
 {
     SetModelIndexNoCreate(modelIndex);
     CreateRwObject();
@@ -100,18 +126,19 @@ void CEntity::SetModelIndex(unsigned int modelIndex)
 
 void CEntity::UpdateRwFrame()
 {
-    if(m_rwObject)
+    if (m_rwObject)
     {
-        RwFrameUpdateObjects(static_cast<RwFrame*>(m_rwObject->object.parent));
+        RwFrameUpdateObjects(RwFrameGetParent(m_rwObject));
     }
 }
 
 bool CEntity::DoesNotCollideWithFlyers()
 {
-    CBaseModelInfo *pModelInfo = CModelInfo::ms_modelInfoPtrs[m_nModelIndex];
-    if((pModelInfo->flags & 0x7800) != 0x800 && (pModelInfo->flags & 0x7800) != 0x1000)
+    CBaseModelInfo *pModelInfo = CModelInfo::GetModelInfo(m_modelIndex);
+    //if((pModelInfo->flags & 0x7800) != 0x800 && (pModelInfo->flags & 0x7800) != 0x1000)
+    if (!bSwaysInWind && !bCollisionWasStreamedWithModel)
     {
-        return pModelInfo->flags & 0x400;
+        return pModelInfo->dwUnknownFlag27;
     }
     return true;
 }
@@ -123,40 +150,41 @@ void CEntity::Add()
 
 void CEntity::Render()
 {
-    if(m_rwObject)
+    if (!m_rwObject)
     {
-        if(m_rwObject->object.type = RW_TYPE_ATOMIC && CTagManager::IsTag(this))
+        return;
+    }
+    if (m_rwObject->type == RW_TYPE_ATOMIC && CTagManager::IsTag(this))
+    {
+        CTagManager::RenderTagForPC(m_rwObject);
+    }
+    else
+    {  
+        int alphaFunc;
+        // Remove alpha function for translucent objects
+        if (m_modelIndex == MI_JELLYFISH || m_modelIndex == MI_JELLYFISH01)
         {
-            CTagManager::RenderTagForPC(m_pRwObject);
+            RwRenderStateGet(rwRENDERSTATEALPHATESTFUNCTIONREF, &alphaFunc);
+            RwRenderStateSet(rwRENDERSTATEALPHATESTFUNCTIONREF, NULL);
+        }
+        m_imBeingRendered = true;
+        if (m_rwObject->type == RW_TYPE_ATOMIC)
+        {
+            RpAtomic* atomic = reinterpret_cast<RpAtomic*>(m_rwObject);
+            atomic->renderCallBack(atomic);
         }
         else
-        {  
-            int alphaFunc;
-            // Remove alpha function for translucent objects
-            if(m_modelIndex == MI_JELLYFISH || m_modelIndex == MI_JELLYFISH01)
-            {
-                RwRenderStateGet(rwRENDERSTATEALPHATESTFUNCTIONREF, &alphaFunc);
-                RwRenderStateSet(rwRENDERSTATEALPHATESTFUNCTIONREF, NULL);
-            }
-            m_imBeingRendered = true;
-            if(m_rwObject->object.type == RW_TYPE_ATOMIC)
-            {
-                RpAtomic* atomic = reinterpret_cast<RpAtomic*>(m_rwObject);
-                atomic->renderCallBack(atomic);
-            }
-            else
-            {
-                RpClumpRender(m_rwObject);
-            }
-            CStreaming::RenderEntity(m_pLastRenderedLink);
-            RenderEffects();
-            // Restore alpha function for translucent objects
-            if(m_modelIndex == MI_JELLYFISH || m_modelIndex == MI_JELLYFISH01)
-            {
-                RwRenderStateSet(rwRENDERSTATEALPHATESTFUNCTIONREF, &alphaFunc);
-            }
-            m_imBeingRendered = false;
+        {
+            RpClumpRender((RpClump*)m_rwObject);
         }
+        CStreaming::RenderEntity(m_pLastRenderedLink);
+        RenderEffects();
+        // Restore alpha function for translucent objects
+        if (m_modelIndex == MI_JELLYFISH || m_modelIndex == MI_JELLYFISH01)
+        {
+            RwRenderStateSet(rwRENDERSTATEALPHATESTFUNCTIONREF, (void*)alphaFunc);
+        }
+        m_imBeingRendered = false;
     }
 }
 
@@ -169,8 +197,8 @@ bool CEntity::LivesInThisNonOverlapSector(int sectorCenterX, int sectorCenterY)
     boundRect.right = floor(boundRect.right * GRID_UNIT + GRID_OFFSET);
     boundRect.top = floor(boundRect.top * GRID_UNIT + GRID_OFFSET);
     // calculate the center point of rectangle
-    int centerX = floor((boundRect.right + boundRect.left) * GRID_UNIT * 0.5 + GRID_OFFSET);
-    int centerY = floor((boundRect.top + boundRect.bottom) * GRID_UNIT * 0.5 + GRID_OFFSET);
+    int centerX = floor((boundRect.right + boundRect.left) * GRID_UNIT / 2 + GRID_OFFSET);
+    int centerY = floor((boundRect.top + boundRect.bottom) * GRID_UNIT / 2 + GRID_OFFSET);
     return centerX == sectorCenterX && centerY == sectorCenterY;
 }
 
@@ -179,30 +207,24 @@ void CEntity::SetupBigBuilding()
     m_usesCollision = false;
     m_isBigBuilding = true;
     m_dontCastShadowsOn = true;
-    CModelInfo::ms_modelInfoPtrs[m_modelIndex]->flags |= 0x20;
+    CBaseModelInfo* modelInfo = CModelInfo::GetModelInfo(m_modelIndex);
+    modelInfo->SetDrawAdditive(true);
 }
 
 void CEntity::ModifyMatrixForCrane()
 {
-    if(!CTimer::m_UserPause && !CTimer::m_CodePause)
+    if (!CTimer::GetUserPause() && !CTimer::GetCodePause() && m_rwObject && m_rwObject->parent != -16)
     {
-        if(m_rwObject)
-        {
-            RwMatrix *pModelling = &reinterpret_cast<RpClump*>(m_rwObject->object.parent)->modelling;
-            if(m_rwObject->parent != -16)
-            {
-                CMatrix mat(m_pRwObject->parent->modelling);
-                mat.SetRotateZOnly((CTimer::GetCurrentTimeInCycles() % 1024) * 0.006132812704890966);
-                mat.UpdateRW();
-                UpdateRwFrame();
-            }
-        }
+        CMatrix mat(&RwFrameGetParent(m_rwObject)->modelling);
+        mat.SetRotateZOnly((CTimer::GetCurrentTimeMs() % 1024) * 0.006132812704890966);
+        mat.UpdateRW();
+        UpdateRwFrame();
     }
 }
 
-void CEntity::RemoveLighting(bool bAdjustGlobal)
+void CEntity::RemoveLighting(bool adjustGlobal)
 {
-    if(bAdjustGlobal)
+    if (adjustGlobal)
     {
         SetAmbientColours();
         DeActivateDirectional();
@@ -210,74 +232,125 @@ void CEntity::RemoveLighting(bool bAdjustGlobal)
     }
 }
 
-bool CEntity::SetupLighting()
+void CEntity::SetupLighting()
 {
-    if(bLightObject)
+    if (bLightObject)
     {
         ActivateDirectional();
-        CVector vecPos = Placeable.GetPos();
-        SetLightColoursForPedsCarsAndObjects(CPointLights::GenerateLightsAffectingObject(vecPos, 0, this) * 0.5);
+        SetLightColoursForPedsCarsAndObjects(CPointLights::GenerateLightsAffectingObject(&GetPos(), 0, this) / 2);
     }
 }
 
-void CEntity::CleanUpOldReference(CEntity **ppRef)
+void CEntity::CleanUpOldReference(CEntity** entityRef)
 {
-    if(m_pReferences)
+    for (SReference* ref = m_pReferences; ref; ref = ref->m_pNext)
     {
-        for(SReference *pRef = m_pReferences; pRef; pRef = pRef->m_pNext)
+        if (ref->m_pEntity == entityRef)
         {
-            if(pRef->m_pEntity == ppRef)
-            {
-                m_pReferences->m_pNext = pRef->m_pNext;
-                pRef->m_pNext = &CReferences::pEmptyList;
-                CReferences::pEmptyList = pRef;
-                pRef->m_pEntity = NULL;
-            }
+            m_pReferences->m_pNext = ref->m_pNext;
+            ref->m_pNext = &CReferences::pEmptyList;
+            CReferences::pEmptyList = ref;
+            ref->m_pEntity = NULL;
         }
     }
 }
 
-void CEntity::AttachToRwObject(RwObject *pObject, bool bUpdateMatrix)
+void CEntity::AttachToRwObject(RwObject* rwObject, bool updateMatrix)
 {
+    if (!bIsVisible || !rwObject)
+    {
+        return;
+    }
+    m_rwObject = rwObject;
+    if (updateMatrix)
+    {
+        GetMatrix()->UpdateMatrix(&RwFrameGetParent(m_rwObject)->modelling);
+    }
+    if (m_rwObject->type == RW_TYPE_CLUMP && CModelInfo::GetModelInfo(GetModelIndex())->GetHasAnimation())
+    {
+        if (GetType() == ENTITY_TYPE_OBJECT)
+        {
+            CPhysical* phys = (CPhysical*)this;
+            if (phys->m_movingList)
+            {
+                phys->AddToMovingList();
+            }
+            SetIsStatic(false);
+        }
+        else
+        {
+            CPtrNodeDoubleLink* node = new CPtrNodeDoubleLink;
+            node->data = this;
+            CWorld::ms_listMovingEntityPtrs->AddToList(node);
+        }
+    }
+    CModelInfo::GetModelInfo(m_modelIndex)->AddRef();
+    m_pLastRenderedLink = CStreaming::AddEntity(this);
+    CreateEffects();
 }
 
 void CEntity::BuildWindSockMatrix()
 {
-}
-
-void CEntity::CleanUpOldReference(CEntity **ppRef)
-{
-    CReference *pRef = m_pRef;
-    while(pRef)
+    CVector windDir = CVector(-(CWeather::WindDir.matrix.right.x + 0.01),
+                            -(CWeather::WindDir.matrix.right.y + 0.01),
+                            0.1f);
+    windDir.Normalise();
+    CVector verticalPlane = CVector(0.0f, 0.0f, 1.0f);
+    CVector final = CrossProduct(windDir, verticalPlane);
+    final.Normalise();
+    CVector p = CrossProduct(verticalPlane, final);
+    GetMatrix()->right = final;
+    GetMatrix()->up = windDir;
+    GetMatrix()->at = p;
+    if (m_rwObject)
     {
-        if(m_pRef->pEntity == *ppRef)
-        {
-            m_pRef->pNext = CReferences::pEmptyList;
-            m_pRef->pEntity = NULL;
-            CReferences::pEmptyList = m_pRef;
-        }
-        pRef = pRef->pNext;
+        UpdateRwMatrix(m_rwObject);
+        UpdateRwFrame();
     }
 }
-
 void CEntity::SetIsStatic(bool bIsStatic)
 {
-    bIsStatic = true;
+    bIsStatic = bIsStatic;
 }
 
 void CEntity::PreRender()
 {
-    CBaseModelInfo *pModelInfo = CModelInfo::ms_modelInfoPtrs[m_nModelIndex];
-    if(pModelInfo->m_uc2DFxCount)
+	CBaseModelInfo *pModelInfo = CModelInfo::GetModelInfo(GetModelIndex());
+	if (pModelInfo->Get2dEffectCount() != 0)
     {
         ProcessLightsForEntity();
     }
-    if(!(pModelInfo->flags & 1))
+	if (!pModelInfo->GetHasBeenPrerendered())
     {
-        pModelInfo->flags |= 1;
+		pModelInfo->SetHasBeenPrerendered(true);
         CAtomicModelInfo *pAtomicInfo = pModelInfo->AsAtomicModelInfoPtr();
-        if(pAtomicInfo)
+        if (pAtomicInfo)
         {
             // #TODO
         }
+	}
+}
+
+CMatrix* CEntity::GetMatrix()
+{
+    if (!m_xyz)
+    {
+        AllocateMatrix();
+        UpdateMatrix(m_transform, m_xyz->matrix);
+    }
+    return &m_xyz->matrix.matrix;
+}
+
+eEntityType CEntity::GetType() const
+{
+    return m_type;
+}
+
+bool CEntity::GetUsesCollision() const
+{
+}
+
+uint8_t CEntity::GetAreaCode() const
+{
+	return m_areaCode;
 }

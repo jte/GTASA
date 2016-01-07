@@ -1,12 +1,26 @@
 #pragma once
-
-
+/*
+00000000 CImgFile        struc ; (sizeof=0x10)   ; XREF: .data:_playerImgr
+00000000 headers         dd ?                    ; offset
+00000004 size            dd ?
+00000008 count           dd ?
+0000000C dynamicAllocated db ?
+0000000D __pad           db 3 dup(?)
+00000010 CImgFile        ends
+*/
+struct CImgDescriptor
+{
+	char name[40];
+	bool isNotPlayerImg;
+	uint8_t pad[3];
+	uint32_t streamHandle;
+};
 
 class CStreaming
 {
 public:
-	CLinkList<CEntity*> *AddEntity(CEntity *pEntity);
-	//* AddImageToList(char const*, bool)
+	static CLinkList<CEntity*>* AddEntity(CEntity *pEntity);
+	static uint32_t AddImageToList(char const* name, bool notPlayerImage);
 	//* AddLodsToRequestList(CVector const&, unsigned int)
 	//* AddModelsToRequestList(CVector const&, unsigned int)
 	//* AddToLoadedVehiclesList(int)
@@ -23,9 +37,9 @@ public:
 	//* DeleteRwObjectsBehindCameraInSectorList(CPtrList&, int)
 	//* DeleteRwObjectsInSectorList(CPtrList&, int, int)
 	//* DeleteRwObjectsNotInFrustumInSectorList(CPtrList&, int)
-	//* DisableCopBikes(bool)
+	static void DisableCopBikes(bool disable);
 	//* FindMIPedSlotForInterior(int)
-	//* FinishLoadingLargeFile(char*, int)
+	static bool FinishLoadingLargeFile(char *a3, int index);
 	//* FlushChannels()
 	//* FlushRequestList()
 	//* ForceLayerToRead(int)
@@ -41,13 +55,13 @@ public:
 	//* GetGta3ImageIndex()
 	//* GetModelCDName(int)
 	//* GetNextFileOnCd(int, bool)
-	//* HasSpecialCharLoaded(int)
+	static bool HasSpecialCharLoaded(int id);
 	//* HasVehicleUpgradeLoaded(int)
 	//* IHaveUsedStreamingMemory()
 	//* ImGonnaUseStreamingMemory()
 	//* Init()
 	//* Init2()
-	//* InitImageList()
+	static void InitImageList();
 	//* InstanceLoadedModels(CVector const&)
 	//* InstanceLoadedModelsInSectorList(CPtrList&)
 	//* IsCarModelNeededInCurrentZone(int)
@@ -60,12 +74,12 @@ public:
 	//* LoadCdDirectory(char const*, int)
 	//* LoadInitialPeds()
 	//* LoadInitialVehicles()
-	//* LoadInitialWeapons()
+	//void LoadInitialWeapons();
 	//* LoadRequestedModels()
 	//* LoadScene(CVector const&)
 	//* LoadSceneCollision(CVector const&)
 	//* LoadZoneVehicle(CVector const&)
-	//* MakeSpaceFor(int)
+	static void MakeSpaceFor(int size);
 	//* PlayerIsFlyingFast()
 	//* PossiblyStreamCarOutAfterCreation(int)
 	//* ProcessEntitiesInSectorList(CPtrList&, float, float, float, float, float, float, float, unsigned int)
@@ -76,7 +90,7 @@ public:
 	//* ReadIniFile()
 	//* ReclassifyLoadedCars()
 	//* RemoveAllUnusedModels()
-	//* RemoveBigBuildings()
+	static void RemoveBigBuildings();
 	//* RemoveBuildingsNotInArea(int)
 	//* RemoveCarModel(int)
 	//* RemoveCurrentZonesModels()
@@ -95,7 +109,7 @@ public:
 	//* RequestBigBuildings(CVector const&)
 	//* RequestFile(int, int, int, int, int)
 	//* RequestFilesInChannel(int)
-	//* RequestModel(int, int);
+    static void RequestModel(uint32_t modelId, uint32_t flags);
 	//* RequestModelStream(int)
 	//* RequestPlayerSection(int, char const*, int)
 	//* RequestSpecialChar(int, char const*, int)
@@ -103,11 +117,11 @@ public:
 	//* RequestVehicleUpgrade(int, int)
 	//* RetryLoadFile(int)
 	//* Save()
-	//* SetLoadVehiclesInLoadScene(bool)
-	//* SetMissionDoesntRequireModel(int)
+	static void SetLoadVehiclesInLoadScene(bool loadVehiclesInLoadScene);
+	static void SetMissionDoesntRequireModel(int id);
 	//* SetMissionDoesntRequireSpecialChar(int)
-	//* SetModelIsDeletable(int)
-	//* SetModelTxdIsDeletable(int)
+	static void SetModelIsDeletable(int id);
+	static void SetModelTxdIsDeletable(int id);
 	//* SetSpecialCharIsDeletable(int)
 	//* Shutdown()
 	//* StartRenderEntities()
@@ -131,7 +145,7 @@ private:
 	//* m_bHarvesterModelsRequested
 	//* m_bStreamHarvesterModelsThisFrame
 	//* ms_NextPedToLoadFromGroup
-	//* ms_aInfoForModel
+	static CStreamingInfo ms_aInfoForModel[26316];
 	//* ms_bEnableRequestListPurge
 	//* ms_bIsInitialised
 	//* ms_bLoadingBigModel
@@ -139,7 +153,7 @@ private:
 	//* ms_channelError
 	//* ms_currentZoneType
 	//* ms_disableStreaming
-	//* ms_files
+	static CImgDescriptor ms_files[8];
 	//* ms_imageOffsets
 	//* ms_imageSize
 	//* ms_imageSizes
@@ -148,21 +162,21 @@ private:
 	//* ms_lastImageRead
 	//* ms_loadedGangCars
 	//* ms_loadedGangs
-	//* ms_memoryAvailable
-	//* ms_memoryUsed
-	//* ms_numModelsRequested
+	static size_t ms_memoryAvailable;
+	static size_t ms_memoryUsed;
+	static size_t ms_numModelsRequested;
 	//* ms_numPedsLoaded
-	//* ms_numPriorityRequests
+	static size_t ms_numPriorityRequests;
 	//* ms_oldSectorX
 	//* ms_oldSectorY
 	//* ms_pEndLoadedList
 	//* ms_pEndRequestedList
 	//* ms_pExtraObjectsDir
-	//* ms_pStartLoadedList
-	//* ms_pStartRequestedList
+	static CStreamingInfo* ms_pStartLoadedList;
+	//* ms_pStartRequestedList;
 	//* ms_pStreamingBuffer
 	//* ms_pedsLoaded
-	CLinkList<CEntity*> ms_rwObjectInstances;
+	static CLinkList<CEntity*> ms_rwObjectInstances;
 	//* ms_streamingBufferSize
 	//* ms_vehiclesLoaded
 };

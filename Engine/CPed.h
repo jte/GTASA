@@ -71,10 +71,38 @@ enum ePedState
 };
 
 
-class CPed
+class CPed : public CPhysical
 {
 public:
-	* AddGogglesModel(int, bool*)
+    //virtual ~CPed();
+    virtual void Add(const CRect&);//inherited from CEntity
+    virtual void Add(); // inherited from CPhysical
+    virtual void Remove(); // inherited from CPhysical
+    virtual void SetIsStatic(); // inherited from CEntity
+    //virtual void SetModelIndex(uint32_t modelIndex);
+    virtual void SetModelIndexNoCreate(uint32_t modelIndex); // inherited from CEntity
+    virtual void CreateRwObject(); // inherited from CEntity
+    //virtual void DeleteRwObject();
+    virtual CRect GetBoundRect(); // inherited from CPhysical
+   // virtual void ProcessControl();
+    /*
+.rdata:0086C384                     dd offset _ZN9CPhysical16ProcessCollisionEv ; CPhysical::ProcessCollision(void)
+.rdata:0086C388                     dd offset _ZN9CPhysical12ProcessShiftEv ; CPhysical::ProcessShift(void)
+.rdata:0086C38C                     dd offset _ZN9CPhysical13TestCollisionEb ; CPhysical::TestCollision(bool)
+.rdata:0086C390                     dd offset _ZN4CPed8TeleportE7CVectorh ; CPed::Teleport(CVector,uchar)
+.rdata:0086C394                     dd offset _ZN4CPed30SpecialEntityPreCollisionStuffEP9CPhysicalbRbS2_S2_S2_ ; CPed::SpecialEntityPreCollisionStuff(CPhysical *,bool,bool &,bool &,bool &,bool &)
+.rdata:0086C398                     dd offset _ZN4CPed31SpecialEntityCalcCollisionStepsERbS0_ ; CPed::SpecialEntityCalcCollisionSteps(bool &,bool &)
+.rdata:0086C39C                     dd offset _ZN4CPed9PreRenderEv ; CPed::PreRender(void)
+.rdata:0086C3A0                     dd offset _ZN4CPed6RenderEv ; CPed::Render(void)
+.rdata:0086C3A4                     dd offset _ZN4CPed13SetupLightingEv ; CPed::SetupLighting(void)
+.rdata:0086C3A8                     dd offset _ZN4CPed14RemoveLightingEb ; CPed::RemoveLighting(bool)
+.rdata:0086C3AC                     dd offset _ZN4CPed30FlagToDestroyWhenNextProcessedEv ; CPed::FlagToDestroyWhenNextProcessed(void)
+.rdata:0086C3B0                     dd offset _ZN4CPed22ProcessEntityCollisionEP7CEntityP9CColPoint ; CPed::ProcessEntityCollision(CEntity *,CColPoint *)
+.rdata:0086C3B4                     dd offset _ZN4CPed11SetMoveAnimEv ; CPed::SetMoveAnim(void)
+.rdata:0086C3B8                     dd offset _ZN4CPed4SaveEv ; CPed::Save(void)
+.rdata:0086C3BC                     dd offset _ZN4CPed4LoadEv ; CPed::Load(void)
+*/
+	/* AddGogglesModel(int, bool*)
 	* AddWeaponModel(int)
 	* AttachPedToBike(CEntity*, CVector, unsigned short, float, float, eWeaponType)
 	* AttachPedToEntity(CEntity*, CVector, unsigned short, float, eWeaponType)
@@ -226,11 +254,12 @@ public:
 	* operator new(unsigned int)
 	* operator new(unsigned int, int)
 	* ~CPed()
+    */
 protected:
 private:
-    	* m_sGunFlashBlendOutRate
+    	/* m_sGunFlashBlendOutRate
 	* m_sGunFlashBlendStart
 	* nCloseBlockedLosWaitTime
 	* nFarBlockedLosWaitTime
-
+    */
 };

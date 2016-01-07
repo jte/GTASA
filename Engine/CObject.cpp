@@ -2,21 +2,21 @@
 
 CObject::CObject()
 {
-    m_pRelatedDummy = NULL;
+    m_relatedDummy = NULL;
     Init();
-    field_13C = 0;
+    m_type = 0;
 }
 
-CObject::CObject(int iModelIndex, bool bCreate)
+CObject::CObject(int modelIndex, bool create)
 {
-    m_pRelatedDummy = NULL;
-    if(bCreate)
+    m_relatedDummy = NULL;
+    if (create)
     {
-        SetModelIndex(iModelIndex);
+        SetModelIndex(modelIndex);
     }
     else
     {
-        SetModelIndexNoCreate(iModelIndex);
+        SetModelIndexNoCreate(modelIndex);
     }
     Init();
 }
@@ -56,22 +56,22 @@ CObject::CObject(CDummyObject *object)
     }
 }
 
-bool CObject::CreateRwObject()
+void CObject::CreateRwObject()
 {
-    return CEntity::CreateRwObject();
+    CEntity::CreateRwObject();
 }
 
-void CObject::SetRelatedDummy(CDummyObject *pDummy)
+void CObject::SetRelatedDummy(CDummyObject* relatedDummy)
 {
-    m_pRelatedDummy = pDummy;
-    pDummy->RegisterReference(&m_pRelatedDummy);
+    m_relatedDummy = relatedDummy;
+    relatedDummy->RegisterReference(&m_relatedDummy);
 }
 
 bool CObject::TryToExplode()
 {
-    if(m_pObjectInfo->ucCausesExplosion && !bExploded)
+    if (m_pObjectInfo->causesExplosion && !m_exploded)
     {
-        bExploded = true;
+        m_exploded = true;
         ForceExplode();
         return true;
     }
@@ -80,33 +80,33 @@ bool CObject::TryToExplode()
 
 void CObject::Explode()
 {
-    CVector pos = Placeable.GetPos();
+    CVector pos = GetPos();
     pos.z += 0.5;
-    CExplosion::AddExplosion(this, getPlayerPed(-1), 9, pos, 100, 1, -1.0, 0);
-    if(m_colDamageEffect == 0xCA || m_colDamageEffect == 0xc8)
+    CExplosion::AddExplosion(this, GetPlayerPed(-1), 9, pos, 100, 1, -1.0, 0);
+    if (m_colDamageEffect == 202 || m_colDamageEffect == 200)
     {
         pos.z -= 1.0;
-        Break(10000.0, pos, 0, getPlayerPed(-1), 51);
+        ObjectDamage(10000.0f, pos, 0, GetPlayerPed(-1), 51);
     }
-    else if(!bDisableFriction)
+    else if (!m_disableFriction)
     {
-        m_vecLinearVelocity.z += 0.5;
-        m_vecLinearVelocity.x += (rand() - 128) * 0.000199999994947575;
-        m_vecLinearVelocity.y += (rand() - 128) * 0.000199999994947575;
-        if(bIsStatic || bIsStaticWaitingForCollision)
+        m_linearVelocity.z += 0.5;
+        m_linearVelocity.x += (rand() - 128) * 0.000199999994947575;
+        m_linearVelocity.y += (rand() - 128) * 0.000199999994947575;
+        if (bIsStatic || bIsStaticWaitingForCollision)
         {
             SetIsStatic(false);
             AddToMovingList();
         }
     }
-    if(m_pObjectInfo->fxType == 2)
+    if (m_objectInfo->fxType == 2)
     {
-        CMatrix pos = CMatrix::FromXYZ(m_xyz);
+        CMatrix pos = GetMatrix();
         // to object space
-        CVector fx_obj_pos = pos * m_pObjectInfo->fxOffset;
-        fx_obj_pos += GetPos(); // to world space
-        FxSystem_c *sys = FxManager.InitialiseFxSystem(m_pObjectInfo->pFxSystemBP, fx_obj_pos, 0, 0);
-        if(sys)
+        CVector fxObjPos = Multiply3x3(pos, m_objectInfo->fxOffset);
+        fxObjPos += GetPos(); // to world space
+        FxSystem_c *sys = FxManager.InitialiseFxSystem(m_objectInfo->fxSystem, fxObjPos, 0, 0);
+        if (sys)
         {
             sys->Start();
         }
@@ -361,7 +361,7 @@ void CObject::Render()
         {
             if(m_ucCreator == 3)
             {
-                if(flags < 0)//test cl,cl; jns
+                if (flags & 0x80)//test cl,cl; jns
                 {
                     CVehicleModelInfo::ms_pRemapTexture = m_pRemapTexture;
                     CModelInfo::ms_modelInfoPtrs[m_nRefModelIndex]->SetColours(m_colour1, m_colour2, m_colour3, m_colour4);

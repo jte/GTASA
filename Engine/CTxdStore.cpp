@@ -18,27 +18,27 @@ int16_t CTxdStore::FindTxdSlot(const char *szName)
     size_t hash = CKeyGen::GetUppercaseKey(szName);
     size_t slot;
     // search [0, ms_lastSlotFound]
-    for(slot = 0; slot <= ms_lastSlotFound; slot++)
+    for (slot = 0; slot <= ms_lastSlotFound; slot++)
     {
         CTexDictionaryEntry *entry = ms_pTxdPool->Get(slot);
-        if(entry->hash == hash)
+        if (entry->hash == hash)
         {
             break;
         }
     }
     // search <ms_lastSlotFound, ms_pTxdPool->GetSize()>
-    if(slot == ms_lastSlotFound)
+    if (slot == ms_lastSlotFound)
     {
         slot = ms_lastSlotFound + 1;
-        for(slot = ms_lastSlotFound + 1; slot < ms_pTxdPool->GetSize(); slot++)
+        for (slot = ms_lastSlotFound + 1; slot < ms_pTxdPool->GetSize(); slot++)
         {
             CTexDictionaryEntry *entry = ms_pTxdPool->Get(slot);
-            if(entry->hash == hash)
+            if (entry->hash == hash)
             {
                 break;
             }
         }
-        if(slot >= ms_pTxdPool->m_size)
+        if (slot >= ms_pTxdPool->GetSize())
         {
             return -1;
         }
@@ -105,7 +105,7 @@ void CTxdStore::Initialise()
     }
     for(size_t i = 0; i < ms_pTxdPool->GetSize(); i++)
     {
-        AddTxdSlot("*", "player", false);
+        AddTxdSlot("*");
     }
     RwTextureSetFindCallBack(TxdStoreFindCB);
     RwTextureSetReadCallBack(TxdStoreLoadCB);
@@ -169,16 +169,14 @@ void CTxdStore::Create(int index)
     }
 }
 
-void CTxdStore::AddTxdSlot(char const *name, char const*, bool)
+uint32_t CTxdStore::AddTxdSlot(char const *name)
 {
     CTexDictionaryEntry *entry = ms_pTxdPool->New();
-    if(entry)
-    {
-        entry->dictionary = NULL;
-        entry->usageCount = 0;
-        entry->parentIndex = -1;
-        entry->hash = CKeyGen::GetUppercaseKey(name);
-    }
+    entry->dictionary = NULL;
+    entry->usageCount = 0;
+    entry->parentIndex = -1;
+    entry->hash = CKeyGen::GetUppercaseKey(name);
+    return entry->hash;
 }
 
 int16_t CTxdStore::FindTxdSlotFromHashKey(int hash)
@@ -214,17 +212,17 @@ static RwTexture *RwTextureGtaStreamRead(RwStream *stream)
 {
     RwUInt32 length;
     RwUInt32 version;
-    if(!RwStreamFindChunk(stream, rwID_TEXTURENATIVE, &length, &version))
+    if (!RwStreamFindChunk(stream, rwID_TEXTURENATIVE, &length, &version))
     {
         return NULL;
     }
     float start_time = CTimer::GetCurrentTimeInCycles() / CTimer::GetCyclesPerMillisecond();
     RwTexture *tex = RwTextureStreamRead(stream); // USE NATIVE TEXTURE READ HERE !! #TODO#
-    if(!tex)
+    if (!tex)
     {
         return NULL;
     }
-    if(gGameState == 8)
+    if (gGameState == 8)
     {
         float dt = CTimer::GetCurrentTimeInCycles() / CTimer::GetCyclesPerMillisecond() - start_time;
         texNumLoaded++;
@@ -239,7 +237,7 @@ static RwTexture *RwTextureGtaStreamRead(RwStream *stream)
     {
         RwTextureSetFilterModeMacro(tex, 4);
     }
-    if(gAnisotropySupported)
+    if (gAnisotropySupported)
     {
         if(RpAnisotTextureGetMaxAnisotropy(tex) >= 1 && g_fx.GetFxQuality() >= 2)
         {

@@ -4,12 +4,12 @@ class CFileLoader
 {
 public:
 	//* AddTexDictionaries(RwTexDictionary*, RwTexDictionary*)
-	RpAtomic *FindRelatedModelInfoCB(RpAtomic *atomic, void *data);
+	static RpAtomic *FindRelatedModelInfoCB(RpAtomic *atomic, void *data);
 	//* FinishLoadClumpFile(RwStream*, unsigned int)
 	//* Load2dEffect(char const*)
 	//* LoadAnimatedClumpObject(char const*)
-	//* LoadAtomicFile(RwStream*, unsigned int)
-	void LoadAtomicFile(char const *filename);
+	static bool LoadAtomicFile(RwStream* stream, uint32_t modelIndex);
+	//static bool LoadAtomicFile(char const *filename);
 	//* LoadAtomicFile2Return(char const*)
 	//* LoadAudioZone(char const*)
 	//* LoadBoundingBox(unsigned char*, CBoundingBox&)
@@ -35,7 +35,7 @@ public:
 	//* LoadObject(char const*)
 	//* LoadObjectInstance(CFileObjectInstance*, char const*)
 	//* LoadObjectInstance(char const*)
-	//* LoadObjectTypes(char const*)
+	void LoadObjectTypes(char const* filename);
 	//* LoadOcclusionVolume(char const*, char const*)
 	//* LoadPathHeader(char const*, int&)
 	//* LoadPedObject(char const*)
@@ -53,7 +53,7 @@ public:
 	//* ReloadObjectTypes(char const*)
 	//* ReloadPaths(char const*)
 	//* SaveTexDictionary(RwTexDictionary*, char const*)
-	//* SetRelatedModelInfoCB(RpAtomic*, void*)
+	static RpAtomic* SetRelatedModelInfoCB(RpAtomic* atomic, void* data);
 	//* StartLoadClumpFile(RwStream*, unsigned int)
 protected:
 private:

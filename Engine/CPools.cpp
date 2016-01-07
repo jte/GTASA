@@ -20,3 +20,8 @@ void CPools::Initialise()
     ms_pPedIntelligencePool = new CPool<CPedIntelligence>[140];
     ms_pPedAttractorPool = new CPool<CPedAttractor>[64];
 }
+
+CPool<CTask> CPools::GetTaskPool()
+{
+    return ms_pTaskPool;
+}

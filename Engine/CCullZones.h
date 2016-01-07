@@ -26,36 +26,51 @@ public:
 	//* Update()
 protected:
 private:
-	static struct {
-        union {
-            uint32_t flags;
+	static union {
+        uint32_t CurrentFlags_Camera;
+        struct
+        {
+            uint8_t CamCloseInForPlayer : 1;
+            uint8_t CamStairsForPlayer : 1;
+            uint8_t Cam1stPersonForPlayer : 1;
+            uint8_t NoRain : 1;
+            uint8_t NoPolice : 1;
+            uint8_t f6;
+            uint8_t DoINeedToLoadCollision : 1;
+            uint8_t f8;
 
-            uint8_t CloseInForPlayer : 1;// 1
-            uint8_t StairsForPlayer : 1;  // 2
-            uint8_t Person1stForPlayer : 1; // 3
-            uint8_t NoRain : 1; // 4
-            uint8_t NoPolice : 1; // 5
-            uint8_t InTunnel : 1; // 6
-            uint8_t NeedToLoadCollision : 1; // 7
-            uint8_t flag8 : 1; // 8
-            uint8_t PoliceAbandonCars : 1; // 9
-            uint8_t InRoomForAudio : 1; // 10
+            uint8_t PoliceAbandonCars : 1;
+            uint8_t InRoomForAudio : 1;
+            uint8_t f11;
+            uint8_t f12;
+            uint8_t f13;
+            uint8_t AllowWeatherInTunnel : 1;
+            uint8_t f15;
+            uint8_t f16;
+
             uint8_t FewerPeds : 1;
-            uint8_t flag12 : 1;
-            uint8_t flag13 : 1;
-            uint8_t flag14 : 1;
+            uint8_t f18;
+            uint8_t f19;
+            uint8_t f20;
             uint8_t DoExtraAirResistanceForPlayer : 1;
             uint8_t FewerCars : 1;
-
+            uint8_t f23;
+            uint8_t f24;
         };
-    } CurrentFlags_Camera;
-	* CurrentFlags_Player
-	* NumAttributeZones
+    };
+	static union 
+    {
+        uint32_t CurrentFlags_Player;
+        struct
+        {
+        };
+    };
+	/* NumAttributeZones
 	* NumMirrorAttributeZones
 	* NumTunnelAttributeZones
 	* aAttributeZones
 	* aMirrorAttributeZones
 	* aTunnelAttributeZones
 	* bMilitaryZonesDisabled
-	* bRenderCullzones
+	* bRenderCullzones*/
 };

@@ -1,6 +1,8 @@
 #pragma once
 
-class CColSphere
+#include "CSphere.h"
+
+class CColSphere : public CSphere
 {
 public:
     //* IntersectEdge(CVector const&, CVector const&, CVector&, CVector&) const
@@ -8,14 +10,14 @@ public:
 	bool IntersectRay(const CVector& R1, const CVector& R2, CVector& I1, CVector& I2) const;
 	//* IntersectSphere(CColSphere const&) const
 	//* Set(float, CVector const&, unsigned char, unsigned char, unsigned char)
-
-    // 
-    const CVector& GetCenter() const;
-    const float GetRadius() const;
+    EColSurface GetSurfaceTypeA() const;
+    EColSurface GetSurfaceTypeB() const;
+    CColLighting GetLighting() const;
+	void SetSurfaceTypeA(EColSurface colSurface);
+	void SetSurfaceTypeB(EColSurface colSurface);
 protected:
 private:
-    CVector m_center;
-    float m_radius;
-    uint16_t m_surfaceType;
-    uint8_t m_lighting;
+    EColSurface m_surfaceTypeA;
+    EColSurface m_surfaceTypeB;
+    CColLighting m_lighting;
 };

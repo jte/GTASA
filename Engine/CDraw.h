@@ -17,9 +17,9 @@ public:
 protected:
 private:
     static bool Drawn;
-	//* FadeBlue
-	//* FadeGreen
-	//* FadeRed
+	static float FadeBlue;
+	static float FadeGreen;
+	static float FadeRed;
 	static CRGBA FadeValue;
 	static bool NotDrawn;
 	static float ms_fAspectRatio;

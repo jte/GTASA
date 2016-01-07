@@ -3,13 +3,13 @@
 class CPostEffects
 {
 public:
-	* CCTV()
+	/* CCTV()
 	* Close()
 	* ColourFilter(RwRGBA, RwRGBA)
 	* DarknessFilter(int)
-	* DoScreenModeDependentInitializations()
-	void DrawQuad(float x, float y, float width, float height, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RwRaster* raster);
-	* DrawQuadSetDefaultUVs()
+	* DoScreenModeDependentInitializations()*/
+	static void DrawQuad(float x, float y, float width, float height, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RwRaster* raster);
+	/* DrawQuadSetDefaultUVs()
 	* DrawQuadSetPixelUVs(float, float, float, float, float, float, float, float)
 	* DrawQuadSetUVs(float, float, float, float, float, float, float, float)
 	* FilterFX_RestoreDayNightBalance()
@@ -21,42 +21,45 @@ public:
 	* ImmediateModeFilterStuffInitialize()
 	* ImmediateModeRenderStatesReStore()
 	* ImmediateModeRenderStatesSet()
-	* ImmediateModeRenderStatesStore()
-	* InfraredVision(RwRGBA, RwRGBA)
-	* InfraredVisionRestoreLightsForHeatObjects()
-	void InfraredVisionSetLightsForDefaultObjects();
-	* InfraredVisionSetLightsForHeatObjects()
-	* InfraredVisionStoreAndSetLightsForHeatObjects(CPed*)
-	void Initialise();
-	bool IsVisionFXActive();
-	* MobileRender()
-	* NightVision(RwRGBA)
-	void NightVisionSetLights();
-	* Radiosity(int, int, int, int)
+	*/
+    static void ImmediateModeRenderStatesStore();
+	/* InfraredVision(RwRGBA, RwRGBA)
+	* InfraredVisionRestoreLightsForHeatObjects()*/
+	static void InfraredVisionSetLightsForDefaultObjects();
+	/* InfraredVisionSetLightsForHeatObjects()
+	* InfraredVisionStoreAndSetLightsForHeatObjects(CPed*)*/
+	static void Initialise();
+	static bool IsVisionFXActive();
+	/* MobileRender()*/
+	static void NightVision(RwRGBA color);
+	static void NightVisionSetLights();
+	/* Radiosity(int, int, int, int)
 	* RasterCreatePostEffects(RwRect)
 	* Render()
-	* ScriptCCTVSwitch(bool)
-	* ScriptDarknessFilterSwitch(bool, int)
-	* ScriptHeatHazeFXSwitch(bool)
-	* ScriptInfraredVisionSwitch(bool)
-	* ScriptNightVisionSwitch(bool)
-	* ScriptResetForEffects()
-	* SetFilterMainColour(RwRaster*, RwRGBA)
+	*/ 
+    static void ScriptCCTVSwitch(bool enable);
+	static void ScriptDarknessFilterSwitch(bool enable, int alpha);
+	static void ScriptHeatHazeFXSwitch(bool enable);
+	static void ScriptInfraredVisionSwitch(bool enable);
+	static void ScriptNightVisionSwitch(bool enable);
+	static void ScriptResetForEffects();
+	/* SetFilterMainColour(RwRaster*, RwRGBA)
 	* SetupBackBufferVertex()
 	* SpeedFX(float)
 	* UnderWaterRipple(RwRGBA, float, float, int, float, float)
 	* UnderWaterRippleFadeToFX()
-	* Update()
+	* Update()*/
 protected:
 private:
-	* SCREEN_EXTRA_MULT_BASE_CAP
+	/* SCREEN_EXTRA_MULT_BASE_CAP
 	* SCREEN_EXTRA_MULT_BASE_MULT
 	* SCREEN_EXTRA_MULT_CHANGE_RATE
 	* m_CCTVcol
-	* m_DarknessFilterAlpha
-	* m_DarknessFilterAlphaDefault
-	* m_DarknessFilterRadiosityIntensityLimit
-	* m_HeatHazeFXHourOfDayEnd
+	*/ 
+    static int m_DarknessFilterAlpha;
+	static int m_DarknessFilterAlphaDefault;
+	static int m_DarknessFilterRadiosityIntensityLimit;
+	/* m_HeatHazeFXHourOfDayEnd
 	* m_HeatHazeFXHourOfDayStart
 	* m_HeatHazeFXIntensity
 	* m_HeatHazeFXRandomShift
@@ -86,34 +89,35 @@ private:
 	* m_SeamRemoverShiftTopLeft
 	* m_SpeedFXAlpha
 	* m_VisionFXDayNightBalance
-	* m_bCCTV
-	* m_bColorEnable
-	* m_bDarknessFilter
-	* m_bDisableAllPostEffect
-	* m_bFog
-	* m_bGrainEnable
-	* m_bHeatHazeFX
-	* m_bHeatHazeMaskModeTest
-	* m_bHilightEnable
-	* m_bInCutscene
-	* m_bInfraredVision
-	* m_bNightVision
-	* m_bRadiosity
-	* m_bRadiosityBypassTimeCycleIntensityLimit
-	* m_bRadiosityDebug
-	* m_bRadiosityLinearFilter
-	* m_bRadiosityStripCopyMode
-	* m_bRainEnable
-	* m_bSavePhotoFromScript
-	* m_bSeamRemover
-	* m_bSeamRemoverDebugMode
-	* m_bSeamRemoverSeamSearchMode
-	* m_bSpeedFX
-	* m_bSpeedFXTestMode
-	* m_bSpeedFXUserFlag
-	* m_bSpeedFXUserFlagCurrentFrame
-	* m_bWaterDepthDarkness
-	* m_colour1Multiplier
+	*/ 
+    static bool m_bCCTV;
+	static bool m_bColorEnable;
+	static bool m_bDarknessFilter;
+	static bool m_bDisableAllPostEffect;
+	static bool m_bFog;
+	static bool m_bGrainEnable;
+	static bool m_bHeatHazeFX;
+	static bool m_bHeatHazeMaskModeTest;
+	static bool m_bHilightEnable;
+	static bool m_bInCutscene;
+	static bool m_bInfraredVision;
+	static bool m_bNightVision;
+	static bool m_bRadiosity;
+	static bool m_bRadiosityBypassTimeCycleIntensityLimit;
+	static bool m_bRadiosityDebug;
+	static bool m_bRadiosityLinearFilter;
+	static bool m_bRadiosityStripCopyMode;
+	static bool m_bRainEnable;
+	static bool m_bSavePhotoFromScript;
+	static bool m_bSeamRemover;
+	static bool m_bSeamRemoverDebugMode;
+	static bool m_bSeamRemoverSeamSearchMode;
+	static bool m_bSpeedFX;
+	static bool m_bSpeedFXTestMode;
+	static bool m_bSpeedFXUserFlag;
+	static bool m_bSpeedFXUserFlagCurrentFrame;
+	static bool m_bWaterDepthDarkness;
+	/* m_colour1Multiplier
 	* m_colour2Multiplier
 	* m_colourBottomVOffset
 	* m_colourLeftUOffset
@@ -126,9 +130,10 @@ private:
 	* m_fInfraredVisionFilterRadius
 	* m_fInfraredVisionHeatObjectCol
 	* m_fInfraredVisionSwitchOnFXCount
-	* m_fNightVisionSwitchOnFXCount
-	* m_fNightVisionSwitchOnFXTime
-	* m_fSpeedFXManualSpeedCurrentFrame
+	*/ 
+    static float m_fNightVisionSwitchOnFXCount;
+	static float m_fNightVisionSwitchOnFXTime;
+	/* m_fSpeedFXManualSpeedCurrentFrame
 	* m_fWaterFXStartUnderWaterness
 	* m_fWaterFullDarknessDepth
 	* m_grainStrength
@@ -137,8 +142,9 @@ private:
 	* m_hilightScale
 	* m_hilightStrength
 	* m_pDmaPkt
-	* m_pGrainRaster
-	* m_smokeyDistance
+	*/ 
+    static RwRaster* m_pGrainRaster;
+	/* m_smokeyDistance
 	* m_smokeyEnable
 	* m_smokeyStrength
 	* m_waterCol
@@ -148,6 +154,7 @@ private:
 	* m_waterStrength
 	* m_xoffset
 	* m_yoffset
-	* ms_imf
-	* pRasterFrontBuffer
+	*/ 
+    static RwIm2DVertex ms_imf[4];
+	static RwRaster* pRasterFrontBuffer;
 };

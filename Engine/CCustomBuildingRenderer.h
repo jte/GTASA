@@ -6,11 +6,11 @@ public:
 	static void AtomicSetup(RpAtomic* atomic);
 //	* CCustomBuildingRenderer()
 	static bool Initialise();
-	//* IsCBPCPipelineAttached(RpAtomic*)
+	static bool IsCBPCPipelineAttached(RpAtomic* atomic);
 	static bool PluginAttach();
 	static void Shutdown();
 	//* Update()
-	//* UpdateDayNightBalanceParam()
+	static void UpdateDayNightBalanceParam();
 	//* ~CCustomBuildingRenderer()
 protected:
 private:

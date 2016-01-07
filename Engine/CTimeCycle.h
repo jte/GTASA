@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CColourSet.h"
+
 class CTimeCycleBox
 {
 public:
@@ -41,6 +43,9 @@ public:
     static void StartExtraColour(int id, bool noInterpol);
 	static void StopExtraColour(bool noInterpol);
 	static void Update();
+    //
+    static CColourSet GetCurrentColours();
+    static CVector GetCurrentVectorToSun();
 protected:
 private:
     

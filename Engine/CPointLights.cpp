@@ -1,142 +1,129 @@
-#include "CPointLights.h"
+#include "StdInc.h"
 
-void CPointLights::AddLight(unsigned char type, CVector origin, CVector direction, float radius, float red, float green, float blue, unsigned char uc8, bool drop_shadow, CEntity *entity)
+void CPointLights::AddLight(uint8_t type, CVector position, CVector direction, float range, float red, float green, float blue, uint8_t fogType, bool dropsShadow, CEntity* entityToLight)
 {
-    CVector camPos = camera.GetPos();
-    float visible_radius = radius + 15.0;
-    CVector dx = origin - camPos;
-    if(dx.x >= visible_radius || dx.x <= -visible_radius)
+    CVector camPos = TheCamera.GetPos();
+    float visibleRadius = range + 15.0f;
+    CVector dx = position - camPos;
+    if (dx.x >= visibleRadius || dx.x <= -visibleRadius)
     {
         return;
     }
-    if(dx.y >= visible_radius || dx.y <= -visible_radius)
+    if (dx.y >= visibleRadius || dx.y <= -visibleRadius)
     {
         return;
     }
-    if(NumLights >= 32)
+    if (NumLights >= 32)
     {
         return;
     }
-    if(dx.Length() >= visible_radius)
+    if (dx.Magnitude() >= visibleRadius)
     {
         return;
     }
     size_t id = NumLights;
-    aLights[id].ucType = type;
-    aLights[id].uc8 = uc8;
-    aLights[id].vecOrigin = origin;
-    aLights[id].vecDirection = direction;
-    aLights[id].fRadius = radius;
-    aLights[id].bDropShadow = drop_shadow;
-    aLights[id].pEntity = entity;
+    aLights[id].m_type = type;
+    aLights[id].m_fogType = fogType;
+    aLights[id].m_position = position;
+    aLights[id].m_direction = direction;
+    aLights[id].m_range = range;
+    aLights[id].m_generateShadows = dropsShadow;
+    aLights[id].m_entityToLight = entityToLight;
     float intensity = 1.0;
-    if(visible_radius * 0.75 <= dx.Length())
+    if(visibleRadius * 0.75f <= dx.Magnitude())
     {
-        intensity = 1.0 - (dx.Length() / visible_radius - 0.75) * 4.0;
+        intensity = 1.0 - (dx.Magnitude() / visibleRadius - 0.75f) * 4.0;
     }
-    aLights[id].fRed = fRed * intensity;
-    aLights[id].fGreen = fGreen * intensity;
-    aLights[id].fBlue = fBlue * intensity;
+    aLights[id].m_red = red * intensity;
+    aLights[id].m_green = green * intensity;
+    aLights[id].m_blue = blue * intensity;
     NumLights++;
 }
 
-float CPointLights::GenerateLightsAffectingObject(CVector const *pos, float *intensity, CEntity *entity)
+float CPointLights::GenerateLightsAffectingObject(const CVector* pos, float* intensity, CEntity* entity)
 {
-    if(NumLights <= 0)
+    if (NumLights == 0)
     {
-        return 0;
+        return 0.0f;
     }
-    float total_light = 0.0;
-    for(size_t i = 0; i < NumLights; i++)
+    float totalLight = 0.0f;
+    for (size_t i = 0; i < NumLights; i++)
     {
-        if(aLights[i].ucType == 3 || aLights[i].ucType == 4)
+        if (aLights[i].m_type == 3 || aLights[i].m_type == 4)
         {
             continue;
         }
-        CVector dx = aLights[i].vecOrigin - pos;
-        float radius = aLights[i].fRadius;
-        if(dx.x <= -radius)
+        CVector dx = aLights[i].m_position - pos;
+        float radius = aLights[i].m_range;
+        if (dx.x <= -radius || dx.x >= radius)
         {
             continue;
         }
-        if(dx.x >= radius)
+        if (dx.y <= -radius || dx.y >= radius)
+        { 
+            continue;
+        }
+        if (dx.z <= -radius || dx.z >= radius)
         {
             continue;
         }
-        if(dx.y <= -radius)
+        if (dx.Magnitude() >= radius)
         {
             continue;
         }
-        if(dx.y >= radius)
+        if (aLights[i].m_type == 2)
+        {
+            totalLight *= dx.Magnitude() / radius;
+            continue;
+        }
+        if (intensity)
+        {
+            *intensity += (1.0 - dx.Magnitude()) * aLights[i].m_red / 3.0f;
+            *intensity += (1.0 - dx.Magnitude()) * aLights[i].m_green / 3.0f;
+            *intensity += (1.0 - dx.Magnitude()) * aLights[i].m_blue / 3.0f;
+        }
+        float brightness = 1.0f;
+        if (dx.Magnitude() >= 0.5f)
+        {
+            brightness = 2.0f * (1.0f - dx.Magnitude());
+        }
+        if (dx.Magnitude() == 0.0f)
         {
             continue;
         }
-        if(dx.z <= -radius)
+        CVector normal = dx;
+        normal.Normalise();
+        if (aLights[i].m_type == 1 && aLights[i].m_entityToLight != entity)
         {
-            continue;
+            // calculate diffuse lighting
+            brightness *= Max<float>(0.0f, 2.0f * (-DotProduct(normal, aLights[i].m_direction) - 0.5f));
         }
-        if(dx.z >= radius)
+        if (brightness > 0.0f)
         {
-            continue;
-        }
-        if(dx.Length() >= radius)
-        {
-            continue;
-        }
-        if(aLights[i].ucType == 2)
-        {
-            total_light *= dx.Length() / radius;
-        }
-        else
-        {
-            if(intensity)
-            {
-                *intensity += (1.0 - dx.Length()) * aLights[i].fRed * 0.333;
-                *intensity += (1.0 - dx.Length()) * aLights[i].fGreen * 0.333;
-                *intensity += (1.0 - dx.Length()) * aLights[i].fBlue * 0.33;
-            }
-            float brightness = 1.0;
-            if(dx.Length() >= 0.5)
-            {
-                brightness = 2.0 * (1.0 - dx.Length());
-            }
-            if(dx.Length() == 0.0)
-            {
-                continue;
-            }
-            CVector dx_normal = dx.Unit();
-            if(aLights[i].ucType == 1 && aLights[i].pEntity != entity)
-            {
-                // calculate diffuse lighting
-                brightness *= max(0.0, 2.0 * (-dx_normal.ScalarProduct(aLights[i].vecDirection) - 0.5));
-            }
-            if(brightness > 0.0)
-            {
-                AddAnExtraDirectionalLight(gtaWorld, dx_normal, brightness * aLights[i].fRed, brightness * aLights[i].fGreen, brightness * aLights[i].fBlue);
-            }
+            AddAnExtraDirectionalLight(gScene.world, normal, brightness * aLights[i].m_red, brightness * aLights[i].m_green, brightness * aLights[i].m_blue);
         }
     }
-    return total_light;
+    return totalLight;
 }
 
-bool CPointLights::ProcessVerticalLineUsingCache(CVector origin, float *centerZ)
+bool CPointLights::ProcessVerticalLineUsingCache(CVector position, float* centerZ)
 {
-    for(size_t i = 0; i < ARRAY_COUNT(aCachedMapReads); i++)
+    for (size_t i = 0; i < ELEMS_COUNT(aCachedMapReads); i++)
     {
-        if(aCachedMapReadReads[i] == origin)
+        if (aCachedMapReads[i] == position)
         {
             *centerZ = aCachedMapReadResults[i];
-            return 1;
+            return true;
         }
     }
     RwSphere s;
     int dummy;
-    if(!CWorld::ProcessVerticalLine(origin, origin.z - 20.0, &s, &dummy, 1, 0, 0, 0, 1, 0))
+    if (!CWorld::ProcessVerticalLine(position, position.z - 20.0, &s, &dummy, 1, 0, 0, 0, 1, 0))
     {
         return false;
     }
     aCachedMapReadResults[NextCachedValue] = s.center.z;
-    aCachedMapReads[NextCachedValue] = origin;
+    aCachedMapReads[NextCachedValue] = position;
     NextCachedValue = (NextCachedValue + 1) % 32;
     *centerZ = s.center.z;
     return true;
@@ -145,8 +132,13 @@ bool CPointLights::ProcessVerticalLineUsingCache(CVector origin, float *centerZ)
 void CPointLights::Init()
 {
     memset(aCachedMapReadResults, 0, sizeof(aCachedMapReadResults));
-    for(size_t i = 0; i < ARRAY_COUNT(aCachedMapReads); i++)
+    for(size_t i = 0; i < ELEMS_COUNT(aCachedMapReads); i++)
     {
-        aCachedMapReads[i] = 0;
+        aCachedMapReads[i] = CVector(0.0f, 0.0f, 0.0f);
     }
+}
+
+void CPointLights::RemoveLightsAffectingObject()
+{
+    RemoveExtraDirectionalLights();
 }

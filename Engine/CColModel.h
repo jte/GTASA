@@ -21,11 +21,14 @@ public:
 	~CColModel(); // DONE
 
     //
-    const CBoundingBox& GetBoundingBox() const;
-    const CCollisionData* GetColData() const;
+    CBoundingBox& GetBoundingBox() const;
+    CCollisionData* GetColData() const;
+	uint8_t GetColNum() const;
+	void SetBoundingBox(const CBoundingBox& boundingBox);
+	void SetColNum(uint8_t colNum);
 private:
     CBoundingBox m_boundingBox;
-    uint8_t pad1;
+    uint8_t m_colNum;
     // 0x02 - bHasTrianglePlanes
     // 0x04 - bInitialized
     uint8_t m_flags;

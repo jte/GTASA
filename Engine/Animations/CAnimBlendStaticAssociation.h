@@ -3,17 +3,17 @@
 class CAnimBlendStaticAssociation
 {
 public:
-	void AllocateSequenceArray(int iCount);
+	void AllocateSequenceArray(size_t count);
 	CAnimBlendStaticAssociation();
-	CAnimBlendStaticAssociation(RpClump*, CAnimBlendHierarchy*);
+	CAnimBlendStaticAssociation(RpClump* clump, CAnimBlendHierarchy* hierarchy);
 	void FreeSequenceArray();
-	void Init(RpClump*, CAnimBlendHierarchy*);
+	void Init(RpClump* clump, CAnimBlendHierarchy* hierarchy);
 	~CAnimBlendStaticAssociation();
 private:
-    uint16_t dwNumBones;
-    uint16_t usAnimId;
-    uint16_t usAnimGroup;
-    uint16_t usFlags;
-    CAnimBlendSequence **ppSequences;
-    CAnimBlendHierarchy *pAnimHierarchy;
+    uint16_t m_numBones;
+    int16_t m_animId;
+    int16_t m_animGroup;
+    uint16_t m_flags;
+    CAnimBlendSequence** m_sequences;
+    CAnimBlendHierarchy* m_animHierarchy;
 };

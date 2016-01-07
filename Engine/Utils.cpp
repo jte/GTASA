@@ -64,6 +64,7 @@ RpHAnimHierarchy *GetAnimHierarchyFromFrame(RwFrame *pFrame)
 
 RpLight *g_AmbientWorldLight;
 RwRGBAReal AmbientLightColourForFrame;
+RwRGBAReal AmbientLightColourForFrame_PedsCarsAndObjects;
 
 void SetAmbientColours()
 {
@@ -288,8 +289,8 @@ RwBool NodeNamePluginAttach()
 
 void GetSlerpParams(const CQuaternion& first, const CQuaternion& second, float& theta0, float& theta1)
 {
-    const float dot = ClampMax(DotProduct(first, second), 1.0f);
-    theta0 = acos(dot);
+    const float cosine = ClampMax(DotProduct(first, second), 1.0f);
+    theta0 = acos(cosine);
     theta1 = theta0 == 0.0f ? 0.0f : (1.0f / sin(theta0));
 }
 
@@ -303,24 +304,15 @@ RwFrame* GetClumpFrame(RpClump* clump)
     return reinterpret_cast<RwFrame*>(clump->object.parent);
 }
 
-const float DotProduct(const RwV3d& first, const RwV3d& second)
-{
-    return first.x * second.x + first.y * second.y + first.z * second.z;
-}
-
 RpAtomic *Get2DEffectAtomicCallback(RpAtomic *atomic, void *data)
 {
-    DWORD* v3 = *(DWORD*)atomic->geometry + g2dEffectPluginOffset)
-  v3 = *(_DWORD *)(g2dEffectPluginOffset + *(_DWORD *)(atomic + 24));
-  if ( v3 )
-  {
-    if ( *(_DWORD *)v3 )
+    Plugin2dEffect *eff = PLUGIN_2DEFFECT(atomic->geometry, data);
+    if (eff && eff->entries)
     {
-      *(_DWORD *)data = atomic;
-      result = 0;
+        *(RpAtomic**)data = atomic;
+        return NULL;
     }
-  }
-  return atomic;
+    return atomic;
 }
 
 RpAtomic *Get2DEffectAtomic(RpClump *clump)
@@ -328,4 +320,205 @@ RpAtomic *Get2DEffectAtomic(RpClump *clump)
     RpAtomic *atomic = NULL;
     RpClumpForAllAtomics(clump, Get2DEffectAtomicCallback, &atomic);
     return atomic;
+}
+
+RwObject* GetFirstObjectCallback(RwObject* object, void* data)
+{
+    RwObject** ptr = (RwObject**)data;
+    *ptr = object;
+    return NULL;
+}
+
+RwObject* GetFirstObject(RwFrame* frame)
+{
+    RwObject* first = NULL;
+    RwFrameForAllObjects(frame, GetFirstObjectCallback, &first);
+    return first;
+}
+
+RwFrame* GetFirstFrameCallback(RwFrame* frame, void* data)
+{
+    RwFrame** ptr = (RwFrame**)data;
+    *ptr = frame;
+    return 0;
+}
+
+RwFrame* GetFirstChild(RwFrame* frame)
+{
+    RwFrame* child = NULL;
+    RwFrameForAllChildren(frame, GetFirstFrameCallback, &child);
+    return child;
+}
+
+void SetLightsWithTimeOfDayColour(RpWorld* world)
+{
+    if (pAmbient)
+    {
+        AmbientLightColourForFrame.red = CTimeCycle::GetAmbientRed() * CCoronas::ScreenMult;
+        AmbientLightColourForFrame.green = CTimeCycle::GetAmbientGreen() * CCoronas::ScreenMult;
+        AmbientLightColourForFrame.blue = CTimeCycle::GetAmbientBlue() * CCoronas::ScreenMult;
+
+        AmbientLightColourForFrame_PedsCarsAndObjects.red = CTimeCycle::GetAmbientRed_Obj() * CCoronas::ScreenMult;
+        AmbientLightColourForFrame_PedsCarsAndObjects.green = CTimeCycle::GetAmbientGreen_Obj() * CCoronas::ScreenMult;
+        AmbientLightColourForFrame_PedsCarsAndObjects.blue = CTimeCycle::GetAmbientBlue_Obj() * CCoronas::ScreenMult;
+
+        if (CWeather::LightningFlash)
+        {
+            AmbientLightColourForFrame.red = 1.0f;
+            AmbientLightColourForFrame.green = 1.0f;
+            AmbientLightColourForFrame.blue = 1.0f;
+            AmbientLightColourForFrame_PedsCarsAndObjects.red = 1.0f;
+            AmbientLightColourForFrame_PedsCarsAndObjects.green = 1.0f;
+            AmbientLightColourForFrame_PedsCarsAndObjects.blue = 1.0f;
+        }
+        RpLightSetColor(pAmbient, &AmbientLightColourForFrame);
+    }
+    if (pDirect)
+    {
+        v1 = flt_B7C544 * 0.99609375 * CCoronas::ScreenMult;
+        DirectionalLightColourForFrame.red = v1;
+        DirectionalLightColourForFrame.green = v1;
+        DirectionalLightColourForFrame.blue = v1;
+        RpLightSetColor(pDirect, &DirectionalLightColourForFrame);
+
+        CVector dirLightToSun = CTimeCycle::m_vecDirnLightToSun;
+
+        v2 = CrossProduct(CVector(0.0f, 0.0f, 1.0f), dirLightToSun);
+        v2.Normalise();
+
+        m.at = -dirLightToSun;
+        m.right = CrossProduct(v2, dirLightToSun);
+        m.top = v2;
+
+        RwFrameTransform(RwFrameGetParent(&pDirect->object.object), &v29, 0);
+    }
+}
+
+bool ReadLine(int file, char* line, int size)
+{
+    return CFileMgr::ReadLine(file, line, size);
+}
+
+CVector Multiply3x3(const CMatrix& matrix, const CVector& vector)
+{
+    CVector t;
+    t.x = matrix.at.x * vector.z + matrix.right.x * vector.x + matrix.up.x * vector.y;
+    t.y = matrix.at.y * vector.z + matrix.right.y * vector.x + matrix.up.y * vector.y;
+    t.z = matrix.at.z * vector.z + matrix.right.z * vector.x + matrix.up.z * vector.y;
+    return t;
+}
+
+static char gGxtToAsciiBuffer[256];
+
+const char* GxtCharToAscii(unsigned short* gxtString, uint8_t offset)
+{
+    unsigned char* raw = (unsigned char*)&gxtString[offset ? offset : 0];
+    int i;
+    for(i = 0; raw && raw[i] && i < ELEMS_COUNT(gGxtToAsciiBuffer); i++)
+    {
+        unsigned char ch = raw[i];
+        if (ch < 128u)
+        {
+            ch = ch;
+        }
+        else if ( ch <= 131u )
+        {
+            ch += 64;
+        }
+        else if ( ch >= 132u && ch <= 141u )
+        {
+            ch += 66;
+        }
+        else if ( ch >= 0x8Eu && ch <= 0x91u )
+        {
+            ch += 68;
+        }
+        else if ( ch >= 0x92u && ch <= 0x95u )
+        {
+            ch += 71;
+        }
+        else if (ch >= 0x96 && ch <= 0x9A)
+        {
+            ch += 73;
+        }
+        else if (ch >= 0x9B && ch <= 0xA4)
+        {
+            ch += 75;
+        }
+        else if (ch >= 0xA5 && ch <= 0xA8)
+        {
+            ch += 77;
+        }
+        else if (ch >= 0xA9 && ch <= 0xCC)
+        {
+            ch += 80;
+        }
+        else if (ch == 0xCD)
+        {
+            ch = -47;
+        }
+        else if (ch == 0xCE)
+        {
+            ch = -15;
+        }
+        else
+        {
+            ch = (((ch != -49) - 1) & 0x9C) + 35;
+        }
+        gGxtToAsciiBuffer[i] = ch;
+    }
+    gGxtToAsciiBuffer[i] = 0;
+    return gGxtToAsciiBuffer;
+}
+
+void AsciiToGxtChar(char const* asciiString, uint16_t* gxtString)
+{
+    char* rawGxt = (char*)gxtString;
+    if (asciiString[0])
+    {
+        for (size_t i = 0; asciiString[i]; i++)
+        {
+            *rawGxt = asciiString[i];
+            rawGxt++;
+        }
+    }
+    *rawGxt = '\0';
+}
+
+const char *__cdecl GetNameAndDamage(const char *a1, char *a2, int a3)
+{
+  const char *result; // eax@1
+  unsigned int v4; // esi@1
+  const char v5; // cl@7
+  const char v6; // cl@12
+
+  result = a1;
+  v4 = strlen(a1);
+  if ( a1[v4 - 4] != '_' || a1[v4 - 3] != 'd' || a1[v4 - 2] != 'a' || a1[v4 - 1] != 'm' )
+  {
+    if ( a1[v4 - 3] != '_' || (v5 = a1[v4 - 2], v5 != 'L') && v5 != 'l' || a1[v4 - 1] != '0' )
+    {
+      *(_BYTE *)a3 = 0;
+      do
+      {
+        v6 = *result;
+        result[a2 - a1] = *result;
+        ++result;
+      }
+      while ( v6 );
+    }
+    else
+    {
+      *(_BYTE *)a3 = 0;
+      result = strncpy(a2, a1, v4 - 3);
+      a2[v4 - 3] = 0;
+    }
+  }
+  else
+  {
+    *(_BYTE *)a3 = 1;
+    result = strncpy(a2, a1, v4 - 4);
+    a2[v4 - 4] = 0;
+  }
+  return result;
 }

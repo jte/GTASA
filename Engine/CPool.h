@@ -12,16 +12,16 @@ public:
         m_objects = new _S[m_size];
         m_initialized = true;
         m_top = 0;
-        for(size_t i = 0; i < m_size; i++)
+        for (size_t i = 0; i < m_size; i++)
         {
             m_flags[i] |= 0x80;
         }
     }
     virtual _S* New()
     {
-        while(m_top != m_size)
+        while (m_top != m_size)
         {
-            if(m_flags[m_top] & 0x80)
+            if (m_flags[m_top] & 0x80)
             {
                 m_flags[m_top] &= 0x7f;
                 m_flags[m_top] ^= (m_flags[m_top] ^ (m_flags[m_top] + 1)) & 0x7f;
@@ -35,7 +35,7 @@ public:
     {
         size_t pos = (object - m_objects) / sizeof(_S);
         m_flags[pos] |= 0x80;
-        if(pos < m_top)
+        if (pos < m_top)
         {
             m_top = pos;
         }

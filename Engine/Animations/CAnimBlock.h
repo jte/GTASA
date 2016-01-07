@@ -3,25 +3,25 @@
 class CAnimBlock
 {
 public:
-    char* GetName() { return m_szName; }
-    bool IsLoaded() const { return m_bLoaded; }
-    uint16_t GetReferenceCount() const { return usRefs; }
-    int GetIdOffset() const { return m_iIdOffset; }
-    size_t GetAnimationCount() const { return iNumAnimations; }
-    AssocGroupId GetFirstAssocGroup() const { return m_FirstAssocGroup; }
+    const char* GetName();
+    bool IsLoaded();
+    uint16_t GetReferenceCount();
+    int GetIdOffset();
+    size_t GetAnimationCount();
+    AssocGroupId GetFirstAssocGroup();
 
-    void SetAnimationCount(size_t iAnimsCount) { iNumAnimations = iAnimsCount; }
-    void SetName(const char szName[16]) { strcpy(m_szName, szName); }
-    void SetIdOffset(int iIdOffset) { m_iIdOffset = iIdOffset; }
-    void SetFirstAssocGroup(AssocGroupId FirstAssocGroup) { m_FirstAssocGroup = FirstAssocGroup; }
-    void SetLoaded(bool bLoaded) { m_bLoaded = bLoaded; }
-protected:
+    void SetAnimationCount(size_t numAnims);
+    void SetName(const char* name);
+    void SetIdOffset(int idOffset);
+    void SetFirstAssocGroup(AssocGroupId assocGroup);
+    void SetLoaded(bool loaded);
+    void SetReferenceCount(uint16_t refs);
 private:
-    char m_szName[16];
-    bool m_bLoaded;
+    const char* m_name;
+    bool m_loaded;
     char pad1;
-    uint16_t usRefs;
-    int m_iIdOffset;
-    size_t iNumAnimations;
-    AssocGroupId m_FirstAssocGroup;
+    uint16_t m_refs;
+    int m_idOffset;
+    size_t m_numAnims;
+    AssocGroupId m_assocGroup;
 };

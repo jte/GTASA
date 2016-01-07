@@ -1,8 +1,14 @@
 #pragma once
 
-class CVector
+class CVector : public RwV3d
 {
 public:
+    CVector(const RwV3d& other)
+    {
+        x = other.x;
+        y = other.y;
+        z = other.z;
+    }
     CVector(float ix, float iy, float iz)
     {
         x = ix;
@@ -25,6 +31,30 @@ public:
 	float NormaliseAndMag();
 
     // operators
+    CVector operator+(const float& rhs)
+    {
+        CVector t;
+        t.x = x + rhs;
+        t.y = y + rhs;
+        t.z = z + rhs;
+        return t;
+    }
+    CVector operator-(const float& rhs)
+    {
+        CVector t;
+        t.x = x - rhs;
+        t.y = y - rhs;
+        t.z = z - rhs;
+        return t;
+    }
+    CVector operator-(const RwV3d& vec)
+    {
+        CVector t;
+        t.x = x - vec.x;
+        t.y = y - vec.y;
+        t.z = z - vec.z;
+        return t;
+    }
     CVector operator+(const CVector& rhs)
     {
         CVector t;
@@ -44,9 +74,7 @@ public:
     CVector operator*(const float& rhs)
     {
         CVector t;
-        t.x = x * rhs;
-        t.y = y * rhs;
-        t.z = z * rhs;
+        t *= rhs;
         return t;
     }
     CVector& operator*=(const float& rhs)
@@ -55,6 +83,14 @@ public:
         y *= rhs;
         z *= rhs;
         return *this;
+    }
+    CVector operator-()
+    {
+        CVector t;
+        t.x = -x;
+        t.y = -y;
+        t.z = -z;
+        return t;
     }
     CVector operator/(const float& rhs)
     {
@@ -71,8 +107,31 @@ public:
         z += rhs.z;
         return *this;
     }
-    float x,y,z;
+    bool operator==(const CVector& rhs)
+    {
+        return x == rhs.x && y == rhs.y && z == rhs.z;
+    }
+    /*
+    CVector& operator=(const RwV3d& rhs)
+    {
+        x = rhs.x;
+        y = rhs.y;
+        z = rhs.z;
+        return *this;
+    }
+    */
 };
 
 const float DotProduct(const CVector& first, const CVector& second);
-const CVector CrossProduct(const CVector& first, const CVector& second);
+CVector CrossProduct(const CVector& first, const CVector& second);
+
+class CVector2D : public RwV2d
+{
+public:
+	CVector2D(float x, float y)
+	{
+		this->x = x;
+		this->y = y;
+	}
+ //   float x,y;
+};
